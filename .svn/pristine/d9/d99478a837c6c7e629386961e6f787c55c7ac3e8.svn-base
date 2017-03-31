@@ -1,0 +1,226 @@
+#include "Herd.h"
+#include "Cow.h"
+#include "Events.h"
+#include "Farm.h"
+#include "System.h"
+#include "BVD_Random_Number_Generator.h"
+#include "Model_Constants.h"
+#include "Utilities.h"
+#include <iostream>
+#include <algorithm>
+#include <vector>
+
+
+Herd::Herd( Farm* f ) 
+{
+  farm=f;
+  number_of_PI = 0;
+  number_of_TI = 0;
+  number_of_R  = 0;
+  number_of_S  = 0;
+  cowgroups = new std::vector<Cow::Set*>();
+  for(int i=0; i< NUMBEROFTYPES; i++){
+	  cowgroups->push_back(new Cow::Set());
+  }
+}
+
+Herd::~Herd()
+{
+	for(auto group: *this->cowgroups)
+		delete group;
+	delete cowgroups;
+}
+
+void Herd::pull_cow( Cow* c )
+{
+	c->Group->erase(c);
+  c->herd=NULL;
+  c->Group = NULL;
+  switch (c->infection_status)
+    {
+    case Infection_Status::SUSCEPTIBLE:
+      remove_cow_from_susceptible( c );
+      number_of_S--;
+      break;
+    case Infection_Status::TRANSIENTLY_INFECTED:
+      number_of_TI--;
+      break;
+    case Infection_Status::PERSISTENTLY_INFECTED:
+      number_of_PI--;
+      break;
+    case Infection_Status::IMMUNE:
+      number_of_R--;   
+      break;
+    }
+  all_my_cows.erase(c);
+}
+
+void Herd::push_cow( Cow* c )
+{
+  c->herd = this;
+  this->putIntoRelevantGroup(c);
+  switch (c->infection_status)
+    {
+    case Infection_Status::SUSCEPTIBLE:
+      add_cow_to_susceptible( c );
+      number_of_S++;
+      break;
+    case Infection_Status::TRANSIENTLY_INFECTED:
+      number_of_TI++;
+      break;
+    case Infection_Status::PERSISTENTLY_INFECTED:
+      number_of_PI++;
+      break;
+    case Infection_Status::IMMUNE:
+      number_of_R++;   
+      break;
+    }
+  all_my_cows.insert(c);
+}
+
+void Herd::execute_event( Event* )
+{
+  // So far, no Herd-related events exist.
+}
+
+/*void Herd::infection_rate_has_changed( double time )
+{
+  farm->infection_rate_has_changed(  time );
+}
+*/
+
+
+int Herd::total_number()
+{
+  return   number_of_PI +
+    number_of_TI +
+    number_of_S  +
+    number_of_R;
+}
+
+void Herd::add_cow_to_susceptible( Cow* c ) { susceptible_cows.push_back ( c ); }
+void Herd::remove_cow_from_susceptible( Cow* c )
+{
+  std::vector<Cow*>::iterator it;
+  it = std::find( susceptible_cows.begin() , susceptible_cows.end() , c );
+  if ( it != susceptible_cows.end() )
+    susceptible_cows.erase ( it );
+  else
+    std::cerr << "Error: Tried removing cow from S but could not find it. This should not happen!!"<<std::endl;
+}
+
+Cow* Herd::random_S_cow()
+{
+  //Select an element from susceptible_cows randomly.
+  
+  if (number_of_S != susceptible_cows.size() )
+    {
+      std::cerr << "Bookkeeping Error @t="<<farm->system->current_time()<<": number_of_S = "<<number_of_S<<", susceptible_cows.size()="<<susceptible_cows.size()<<std::endl;
+      if ( susceptible_cows.empty() )
+	  std::cerr << "susceptible_cows is actually empty.";
+      else
+	for (auto c : susceptible_cows )
+	  std::cerr << Utilities::IS_tostr.at(c->infection_status) << ",";
+      std::cerr<<std::endl;
+    }
+    
+  int id = farm->system->rng.ran_unif_int( number_of_S );
+  Cow* ran_cow = susceptible_cows [id];
+  if(ran_cow->infection_status != Infection_Status::SUSCEPTIBLE){
+	  std::cerr << "the randomly chosen cow is not susceptible" << std::endl;
+  }
+  return ran_cow;
+}
+
+void Herd::print_all_cows(std::ostream& out )
+{
+  
+  for ( auto c : all_my_cows )
+    {
+      Utilities::pretty_print( c , out );
+    }
+  out << std::endl;
+  out << "--------------------------------------------------------------------------------"<<std::endl<<std::endl;
+}
+
+void Herd::print_susceptible_ids( std::ostream& out )
+{
+  std::cout << "Susceptible cows: ";
+  for ( auto c : susceptible_cows )
+    std::cout << c->id() << ", ";
+  std::cout << std::endl;
+}
+
+void Herd::print_info(std::ostream& out )
+{
+  print_all_cows( out );
+  out << "Numbers: PI="<<number_of_PI<<", TI="<<number_of_TI<<", R="<<number_of_R<<", S="<<number_of_S<<std::endl;
+  print_susceptible_ids( out );
+  out << std::endl;
+}
+
+void Herd::reevaluateGroupsOfAllCows(){
+	for (auto cow : all_my_cows){
+		this->reevaluateGroup(cow);
+	}
+}
+void Herd::reevaluateGroup(Cow* cow){
+	 
+	 cow->Group->erase(cow);
+	 cow->Group = NULL;
+	 this->putIntoRelevantGroup(cow);
+}
+int Herd::getNumberOfCowsInGroup(Cow_Trade_Criteria crit){
+	Cow::Set* group = this->getRelevantGroup(crit);
+	return group->size();
+}
+void Herd::getNRandomCowsFromGroup(int n,Cow_Trade_Criteria crit, Cow::Set* setOfCows){
+	#ifdef _HERD_DEBUG_
+		std::cout << "HERD: trying to select " << n << " cows for offer for crit "<< crit << std::endl;
+		std::cout << "HERD: By now the number of cows that is already in this set is " << setOfCows->size() << std::endl;
+	#endif
+	Cow::Set *group = this->getRelevantGroup(crit);
+	if(n >= group->size()){
+		n = group->size();
+		setOfCows->insert(group->begin(), group->end());
+	}
+	int * indices = new int[n];
+	this->farm->system->rng.getNRandomNumbersInRange(n,0,group->size(), indices);
+	#ifdef _HERD_DEBUG_
+		std::cout << "got a group of " << group->size() << "cows" << std::endl;
+	#endif
+	std::sort(indices, indices + n);
+	int j = 0;
+	int i = 0;
+	std::set<Cow*>::iterator it;
+	for(it = group->begin(); it != group->end(); it++){
+		#ifdef _HERD_DEBUG_
+			//std::cout << "Herd: index j " << indices[j] << " i " << i << std::endl;
+			#endif
+		if(indices[j] == i){
+			#ifdef _HERD_DEBUG_
+			std::cout << "Herd: adding cow " << std::endl; 
+			#endif
+			setOfCows->insert(*it); 
+			j++;
+			if(j >= n) break;
+					
+		}
+		i++;
+	}
+	delete indices;
+	#ifdef _HERD_DEBUG_
+		std::cout << "HERD: selected" << n << " cows for offer for crit "<< crit << std::endl;
+		std::cout << "HERD: By now the number of cows that is already in this set is " << setOfCows->size() << std::endl;
+	#endif
+}
+
+inline Cow::Set* Herd::getRelevantGroup(Cow_Trade_Criteria crit){
+	
+		return (*this->cowgroups)[crit];
+}
+void Herd::putIntoRelevantGroup(Cow* cow){
+	Cow::Set* relevantGroup = this->getRelevantGroup(cow->getCowTradeCriteria());
+	cow->Group = relevantGroup;
+	relevantGroup->insert(cow);
+}

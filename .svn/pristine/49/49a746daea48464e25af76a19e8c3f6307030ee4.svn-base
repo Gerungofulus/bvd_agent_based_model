@@ -1,0 +1,342 @@
+#include "Initializer.h"
+#include "Farm.h"
+#include "Slaughterhouse.h"
+#include "Simple_One_Herd_Farm.h"
+#include "Events.h"
+#include "Cow.h"
+#include "BVD_Random_Number_Generator.h"
+#include "Model_Constants.h"
+#include "System.h"
+#include "projectImports/inih/cpp/INIReader.h"
+#include <iostream>
+#include "CowWellFarm.h"
+#include "CSV_Reader.h"
+#include "Small_One_Herd_Farm.h"
+std::string Initializer::noinifilestring = "NONE";
+Initializer::Initializer(INIReader* inireader)
+{
+	this->reader = inireader;
+  set_default_age_distribution( );
+  set_default_farm_size_distribution( ); 
+  
+  std::string  type = reader->Get("system", "type", "rndFarms");
+	this->smallFarmMax = reader->GetInteger("input", "smallFarmSizeMax", 0);
+  if(type.compare("rndFarms") == 0){
+	  this->simType = rndFarms;
+  }else if(type.compare("inputFarmFile") == 0){
+	  this->simType = inputFarmFile;
+  }else{
+	  std::cerr << "Unknown simulation type. Aborting" << std::endl;
+	  exit(18);
+  }
+	double percPI = reader->GetReal("modelparam", "populationPercentagePI", 0.02);
+	double percTI = reader->GetReal("modelparam", "populationPercentageTI", 0.02);
+	int farmNum = reader->GetInteger("modelparam", "numberOfFarms", 0);
+	int wellNum = reader->GetInteger("modelparam", "numberOfWells", 0);
+
+	int minAge = reader->GetInteger("modelparam", "age_dist_min", 0);
+	int maxAge = reader->GetInteger("modelparam", "age_dist_max", 3000);
+	int modAge = reader->GetInteger("modelparam", "age_dist_mod", 200);
+	set_default_age_distribution(minAge, maxAge, modAge);
+	
+	int minFarmSize = reader->GetInteger("modelparam", "farmsize_min", 10);
+	int maxFarmSize = reader->GetInteger("modelparam", "farmsize_max", 500);
+	set_default_farm_size_distribution(minFarmSize, maxFarmSize);
+	
+	
+	int slaughterHouseNum = reader->GetInteger("modelparam", "numberOfSlaughterHouses", 0);
+	if(percPI + percTI > 1.0){
+		std::cerr << "More than 100% of the population are supposed to suffer from BVD...aborting." << std::endl;
+		exit(21);
+		
+	}
+	std::string inifilename = reader->Get("modelparam", "inifileName", Initializer::noinifilestring);
+	set_default_percentage_of_PI_animals_in_farm( percPI);
+    set_default_percentage_of_TI_animals_in_farm( percTI);
+
+        
+    set_number_of_slaughterhouses(slaughterHouseNum);
+    set_number_of_wells(wellNum);
+
+    if(inifilename.compare(Initializer::noinifilestring) != 0){
+		CSVTable<int> table = CSVReader<int>::readCSVFile(inifilename, true, ';');
+		simType = inputFarmFile;
+		int total_number_of_farms = 0;
+		int farmNumber, cowNum;
+		if(table.getNumCols() < 2){
+			std::cerr << "csv file does not contain enoguh columns" << std::endl;
+			std::cout << inifilename << std::endl;
+			exit(15);
+		}
+		for(int i=0; i < table.getNumRows() ; i++){
+			cowNum = table[0][i];
+			farmNumber = table[1][i];
+			if(cowNum <= minFarmSize || cowNum > maxFarmSize) continue; 
+			total_number_of_farms += farmNumber;
+
+				
+		}
+		this->set_number_of_farms(total_number_of_farms);
+
+		total_number_of_farms = 0;
+		
+		for(int i=0; i < table.getNumRows() ; i++){
+			cowNum = table[0][i];
+			farmNumber = table[1][i];
+			if(cowNum <= minFarmSize || cowNum > maxFarmSize) continue; 
+			for(int j=0; j < farmNumber; j++){
+				total_number_of_farms++;
+				this->set_number_of_animals_in_farm(total_number_of_farms-1, cowNum);
+				
+			}
+		}
+		farmNum = total_number_of_farms;
+	}else{
+		set_number_of_farms(farmNum);
+
+	}
+	#ifdef _INITIALIZER_DEBUG_
+		std::cout <<"setting number of farms to " << farmNum << ", number of slaughterhouses to " <<  slaughterHouseNum << " and number of Wells to " << wellNum << std::endl;
+	#endif
+	std::cout << "created initializer for " << farmNum << " farms." << std::endl;
+}
+
+
+Initializer::~Initializer()
+{
+
+}
+
+
+void Initializer::set_default_age_distribution( double min , double max , double mod )
+{
+  def_age_distr.min = min;
+  def_age_distr.max = max;
+  def_age_distr.mod = mod;  
+}
+
+
+void Initializer::set_default_farm_size_distribution(  int min, int max  )
+{
+  def_farm_size_distr.min = min;
+  def_farm_size_distr.max = max;
+  
+}
+
+
+void Initializer::set_default_percentage_of_PI_animals_in_farm( double no_of_PI )
+{
+	if(no_of_PI < 0.0 || no_of_PI > 1.0){
+		std::cerr << "percentage of PIs in population is to high. Must be element of [0.0;1.0]. Setting it to default value of 0.02" << std::endl;
+		def_PI = 0.02;
+		return;
+	}
+		
+  def_PI = no_of_PI;
+}
+void Initializer::set_default_percentage_of_TI_animals_in_farm( double no_of_TI )
+{
+	if(no_of_TI < 0.0 || no_of_TI > 1.0){
+		std::cerr << "percentage of TIs in population is to high. Must be element of [0.0;1.0]. Setting it to default value of 0.02" << std::endl;
+		def_TI = 0.02;
+		return;
+	}
+		
+  def_TI = no_of_TI;
+}
+
+
+void Initializer::set_number_of_farms( int N )
+{
+  if ( N < 1 )
+    N=1;
+  number_of_farms = N;
+  
+  for (int i=0 ; i < N ; i++ )
+    {
+      age_distr.push_back( def_age_distr );
+      no_animal.push_back( -1 );
+      no_PI.push_back( def_PI );
+      no_TI.push_back(def_TI);
+
+    }
+}
+void Initializer::set_number_of_slaughterhouses( int N ){
+	if ( N < 0 )
+    	N=0;
+  	number_of_slaughterhouses = N;
+}
+void Initializer::set_number_of_wells( int N ){
+	if ( N < 0 )
+    	N=0;
+  	number_of_wells = N;
+}
+
+void Initializer::set_number_of_animals_in_farm(    int farm_idx , int no_of_animals )
+{
+  if ( farm_idx >= number_of_farms )
+    return;
+  if( no_of_animals > 0 )
+    no_animal.at( farm_idx ) = no_of_animals;
+}
+
+
+void Initializer::set_number_of_PI_animals_in_farm( int farm_idx , double no_of_PI )
+{
+  if ( farm_idx >= number_of_farms )
+    return;
+  if( no_of_PI >= 0.0 && no_of_PI <= 1.0 )
+    no_PI.at( farm_idx ) = no_of_PI;
+}
+
+
+void Initializer::set_age_distribution_in_farm(     int farm_idx , double min , double max , double mod )
+{
+  if ( farm_idx >= number_of_farms )
+    return;
+  if( min > 0 && mod >= min && max >=mod )
+    age_distr.at( farm_idx ) = {min,max,mod};
+}
+
+
+
+void Initializer::initialize_system( System* s )
+{
+  
+  Farm* farm;
+  Cow::set_system( s );
+	
+
+	for (int i=0 ; i<number_of_farms ; i++ ){
+		if(this->smallFarmMax < no_animal.at(i)){
+			farm = new Simple_One_Herd_Farm( s );
+		}else{
+			farm = new Small_One_Herd_Farm(s);
+		}
+		initialize_random_farm( farm , i );
+		s->register_farm(farm);
+	}
+	
+  for(int i=0; i < this->number_of_wells;i++){
+	    farm = new CowWellFarm(s);
+		s->register_farm(farm);
+    }
+  
+    for(int i=0; i < this->number_of_slaughterhouses;i++){
+	    farm = new Slaughterhouse(s);
+	    this->initialize_slaughterhouse((Slaughterhouse*)farm);
+	    s->register_farm(farm);
+    }
+
+}
+
+
+
+// private:
+void Initializer::initialize_random_farm( Farm* farm , int farm_idx )
+{
+	#ifdef _DEBUG_
+		std::cout << "initializing farm" << std::endl;
+	#endif
+		std::cout << "initializing farm with id "<< farm_idx << std::endl;
+  System* s = farm->system;
+  int i;
+  
+  
+  int number = no_animal.at(farm_idx);
+	double hi,lo;
+	lo = log10((double)def_farm_size_distr.min);
+	hi = log10((double)def_farm_size_distr.max);
+  Cow* c;
+  //(1) calculate number of animals
+    if ( number <= 0  )
+      {
+	
+	number = (int)pow(10,s->rng.ran_unif_double( hi , lo ));
+      }
+  //For each animal
+    for( i=0 ; i<number ; i++ )
+      {
+	
+	c = this->createCow(farm_idx, i, number);
+
+	
+	//(5) put animal into farm
+	farm->push_cow( c );
+	this->scheduleFutureEventsForCow(c, farm, farm_idx, i, number);
+	
+      }
+      farm->holdSize();
+      #ifdef _DEBUG_
+		std::cout << "finished setting up the farm" << std::endl;
+	#endif
+}
+void Initializer::initialize_farm_of_size(Farm* farm, int size){
+	
+}
+void Initializer::initialize_slaughterhouse( Slaughterhouse* slh ){
+	
+}
+
+inline Cow* Initializer::createCow(const int& farm_idx, const int& i, const int& number){
+	//(2) calculate age
+	double mod,hi,lo, age;
+	lo = age_distr.at(farm_idx).min;
+	hi = age_distr.at(farm_idx).max;
+	mod= age_distr.at(farm_idx).mod;
+	System* s = System::getInstance(NULL);
+	age = s->rng.ran_triangular_double( lo, hi, mod );
+
+	//(3) create cow
+	Cow* c = new Cow( (0-age) ,NULL );
+
+	//(4) calculate infection status
+
+	
+	if(i < (int) (no_PI.at(farm_idx) * number)){
+		c->infection_status = Infection_Status::PERSISTENTLY_INFECTED;
+	}else if(i < (int) (no_TI.at(farm_idx) * number)){
+		c->infection_status = Infection_Status::TRANSIENTLY_INFECTED;
+	}else{
+		c->infection_status =  Infection_Status::SUSCEPTIBLE;		
+	}
+	
+	return c;
+}
+
+inline void Initializer::scheduleFutureEventsForCow(Cow* c, Farm* farm, const int& farm_idx, const int& i, const int& number){
+	Event_Type et;
+	double t;
+	System* s = System::getInstance(NULL);
+	double insem_age = s->rng.first_insemination_age();
+	double age = c->age();
+	if ( age >= insem_age )
+	  {
+	    int calvings_so_far = (age - insem_age ) / ( s->rng.duration_of_pregnancy() + s->rng.time_of_rest_after_calving(c->calving_number) );
+	    c->calving_number -= calvings_so_far;
+	 
+	    //(5) calculate next breeding event for this animal
+	    // type is either insemination or birth (neglecting all other possibilities).
+	    et = ( s->rng.ran_unif_int(100) < 50 ) ? Event_Type::INSEMINATION : Event_Type::BIRTH;
+	    if (et==Event_Type::BIRTH)
+	      {
+		if(i < (int) (no_PI.at(farm_idx) * number)){
+			c->calf_status = Calf_Status::PERSISTENTLY_INFECTED;
+		}else{
+			c->calf_status = Calf_Status::SUSCEPTIBLE;
+		}
+		t = s->rng.ran_unif_double( bvd_const::pregnancy_duration.min , 1 );
+	      }
+	    else
+	      {
+		t = s->rng.time_of_rest_after_calving( c->calving_number );
+	      }
+	  }
+	else
+	  {
+	    et = Event_Type::INSEMINATION;
+	    t  = insem_age - age;
+	  }
+	//(6) schedule the event.
+	s->schedule_event( new Event( t , et , c->id() ) );
+}

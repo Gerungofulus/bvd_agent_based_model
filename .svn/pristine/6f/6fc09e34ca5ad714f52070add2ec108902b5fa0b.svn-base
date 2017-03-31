@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+import h5py as h5
+import numpy as np
+import sys
+import json
+
+if len(sys.argv) < 2:
+	print("you have to provide a filename")
+	sys.exit(1)
+
+
+fileName = sys.argv[1]
+f = h5.File(fileName)
+
+h5tradeTimes = f['BVD_Trade_Times']
+tradeTimes = h5tradeTimes[:].astype(int)
+print(str(tradeTimes))
+
+tradeMatriceList = []
+
+for time in tradeTimes:
+	dataSetName = "Trades_t" + str(time)
+	h5Matrix = f[dataSetName]
+	intMatrix = h5Matrix[:,:].astype(int)
+	tradeMatriceList.append(intMatrix)
+
+
+
+

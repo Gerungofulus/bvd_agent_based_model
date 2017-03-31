@@ -1,0 +1,157 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "import itertools as it\n",
+    "import operator as op\n",
+    "import collections as cl\n",
+    "import itertools as it\n",
+    "import operator as op\n",
+    "import numpy as np\n",
+    "import matplotlib.dates as mdates\n",
+    "import matplotlib.pyplot as plt\n",
+    "from datetime import datetime"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "date_EIN= np.genfromtxt(\"Zugekaufte_Tiere.txt\", delimiter=',', converters={ 0: mdates.strpdate2num('%d.%m.%Y') or 0})\n",
+    "date_AUS= np.genfromtxt(\"Verkaufte_Tiere.txt\", delimiter=',', converters={ 0: mdates.strpdate2num('%d.%m.%Y') or 0})\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "\n",
+    "mpl_EIN = mdates.num2date(date_EIN)\n",
+    "mpl_AUS = mdates.num2date(date_AUS)\n",
+    "# plot it\n",
+    "fig, ax = plt.subplots()\n",
+    "ax.hist(mpl_EIN, bins=np.arange(min(date_EIN), max(date_EIN), 90), alpha=0.6 ,color='blue', label='IN')\n",
+    "ax.hist(mpl_AUS, bins=np.arange(min(date_EIN), max(date_EIN), 90),  alpha=0.6, color='lightgreen', label='OUT')\n",
+    "#ax.set_xticks([360,720,1080,1440, 1800, 2160,2520,2880])\n",
+    "\n",
+    "ax.xaxis.set_major_locator(mdates.YearLocator())\n",
+    "#ax.xaxis.set_major_formatter(mdates.DateFormatter('%y'))\n",
+    "ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))\n",
+    "plt.xticks(np.arange(min(date_EIN), max(date_EIN)+1, 500))\n",
+    "\n",
+    "plt.title('Number of traded cattle over time') \n",
+    "plt.legend(loc='upper left')\n",
+    "plt.ylabel('Number of traded animals')\n",
+    "plt.xlabel('Time')\n",
+    "plt.grid(True)\n",
+    "\n",
+    "\n",
+    "#plt.savefig('age_when_traded.png')\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 32,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "\n",
+    "aus = cl.Counter(date_AUS)\n",
+    "\n",
+    "sorted_aus=cl.OrderedDict(sorted(aus.items()))\n",
+    "\n",
+    "freq_aus= np.diff(sorted_aus.keys())\n",
+    "\n",
+    "num_freq_aus = cl.Counter(freq_aus)\n",
+    "\n",
+    "\n",
+    "#plt.plot(num_freq_ein.keys(),num_freq_ein.values(), 'o-', color='blue')\n",
+    "plt.plot(num_freq_aus.keys(),num_freq_aus.values(), 'o-', color='blue')\n",
+    "\n",
+    "plt.xticks(np.arange(min(num_freq_aus.keys()), max(num_freq_aus.keys())+1, 2))\n",
+    "\n",
+    "plt.title('selling frequency') \n",
+    "plt.xlabel('Time in days')\n",
+    "plt.ylabel('number of transactions')\n",
+    "plt.grid(True)\n",
+    "\n",
+    "plt.show()\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Counter({1.0: 171,\n",
+       "         2.0: 123,\n",
+       "         3.0: 52,\n",
+       "         4.0: 86,\n",
+       "         5.0: 104,\n",
+       "         6.0: 83,\n",
+       "         7.0: 93,\n",
+       "         8.0: 36,\n",
+       "         9.0: 24,\n",
+       "         10.0: 14,\n",
+       "         11.0: 19,\n",
+       "         12.0: 15,\n",
+       "         13.0: 10,\n",
+       "         14.0: 12,\n",
+       "         15.0: 1,\n",
+       "         16.0: 1,\n",
+       "         21.0: 1})"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 2",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.11"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}

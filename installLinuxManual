@@ -1,0 +1,14 @@
+In order for that programm to work we need the too libraries libhdf5.so and libhdf5_hl.so
+They can be linked by invoking the following two commands in your command line.
+Make sure that your current working directory is the one with the programm.
+Also make sure that the first path behind the -s directive is the actual path to the
+installed library. The path given in that example is the one on our machines. If your
+configuration is different, you need to change that.
+
+
+ln -s /usr/lib/x86_64-linux-gnu/libhdf5_serial.so.8.0.2 libhdf5.so
+ln -s /usr/lib/x86_64-linux-gnu/libhdf5_serial_hl.so.8.0.2 libhdf5_hl.so
+
+After you linked the libraries properly the program should compile by using the command
+
+make programm

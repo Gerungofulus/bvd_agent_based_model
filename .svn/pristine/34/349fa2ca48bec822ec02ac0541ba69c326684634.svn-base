@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+abs_script_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+
+
+execfile(os.path.join(abs_script_dir, "openHDF5file.py"))
+execfile(os.path.join(abs_script_dir, "outputSpecification.py"))
+
+h5trades = f[tradingTableName]
+trades = h5trades[:,:].astype(float)
+
+if not 'tradingAges' in globals():
+    tradingAges = []
+    tradingAgesMale = []
+    tradingAgesFemale = []
+for trade in trades:
+	tradingAges.append(trade[tradeCowAgeIndex])
+	if trade[tradeCowSexIndex] == cowFemale:
+		tradingAgesFemale.append(trade[tradeCowAgeIndex])
+	else:
+		tradingAgesMale.append(trade[tradeCowAgeIndex])
+		
+	
+
+tradingAgeY , tradingAgeX = np.histogram(tradingAges, bins=range(0,printTillAge))
+tradingAgeFemaleY , tradingAgeFemaleX = np.histogram(tradingAgesFemale, bins=range(0,printTillAge))
+tradingAgeMaleY , tradingAgeMaleX = np.histogram(tradingAgesMale, bins=range(0,printTillAge))

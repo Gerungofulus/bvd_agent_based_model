@@ -1,0 +1,581 @@
+#include "AdvancedOutput.h"
+#include "projectImports/inih/cpp/INIReader.h"
+#include <iostream>
+#include <fstream>
+#include "Cow.h"
+#include "Farm.h"
+#include "Herd.h"
+#include "Utilities.h"
+
+double CowDataPoint::operator[] (int i){
+	int retVal = -1;
+	switch(i){
+		case 0:
+			retVal = this->id;
+			break;
+		case 1:
+			retVal = this->meanCalvingTime;
+			break;
+		case 2: 
+			retVal = this->female;
+			break;
+		case 3: 
+			retVal = this->age;
+			break;
+		case 4:
+			retVal = this->numberOfCalves;
+			break;
+			
+		case 5:
+			retVal = causeOfDeath;
+			break;
+		case 6:
+			retVal = firstCalvingTime;
+			break;
+		default:
+			std::cerr << "Error: Asked CowDataPoint for index " << i << std::endl;
+			break;
+		
+	}
+	return retVal;
+}
+const int CowDataPoint::size = 7;
+CowDataPoint::operator double*(){
+
+	double *dat = new double[CowDataPoint::size];
+	for(int i=0; i< CowDataPoint::size; i++){
+		dat[i] = (*this)[i];
+		
+	}
+	return dat;
+}
+int FarmDataPoint::operator[] (int i){
+	int retVal = -1;
+	switch(i){
+		case 0:
+			retVal = this->id;
+			break;
+		case 1:
+			retVal = this->numberS;
+			break;
+		case 2: 
+			retVal = this->numberTI;
+			break;
+		case 3: 
+			retVal = this->numberPI;
+			break;
+		case 4:
+			retVal = this->numberR;
+			break;
+		default:
+			std::cerr << "Error: Asked FarmDataPoint for index " << i << std::endl;
+			break;
+		
+	}
+	return retVal;
+}
+const int FarmDataPoint::size = 5;
+FarmDataPoint::operator int*(){
+
+	int *dat = new int[FarmDataPoint::size];
+	for(int i=0; i< FarmDataPoint::size; i++){
+		dat[i] = (*this)[i];
+		
+	}
+	
+	return dat;
+}
+double TradeDataPoint::operator[] (int i){
+	double retVal = -1.0;
+	switch(i){
+		case 0:
+			retVal = this->date;
+			break;
+		case 1:
+			retVal = this->srcFarmID;
+			break;
+		case 2:
+			retVal = this->destFarmID;
+			break;
+		case 3:
+			retVal = this->cowID;
+			break;
+		case 4:
+			retVal = this->cowAge;
+			break;
+		case 5:
+			retVal = this->cowSex;
+			break;
+		default:
+			std::cerr << "Error: Asked TradeDataPoint for index " << i << std::endl;
+			break;
+	}
+	return retVal;
+}
+
+const int TradeDataPoint::size = 6; //number of data points given in a tradeDataPoint
+TradeDataPoint::operator const double*(){
+
+	double *dat = new double[TradeDataPoint::size];
+	for(int i=0; i< TradeDataPoint::size; i++){
+		dat[i] = (*this)[i];
+		
+	}
+	
+	return dat;
+}
+TradeDataPoint::operator double*(){
+
+	double *dat = new double[TradeDataPoint::size];
+	for(int i=0; i< TradeDataPoint::size; i++){
+		dat[i] = (*this)[i];
+		
+	}
+	
+	return dat;
+}
+//AdvancedOutput::tradeDataSave::operator const double*(){
+//	return new double[this->size()][tradeDataPoint::size](this);
+//}
+const std::string AdvancedOutput::intermediateCalvingTimeTableName = "BVD_intermediate_calving_times";
+AdvancedOutput::AdvancedOutput(INIReader& reader){
+	this->overwrite = reader.GetBoolean("output", "overwrite", false);
+  
+	auto hasEnding =[this] (std::string const &fullString, std::string const &ending) {
+		if (fullString.length() >= ending.length()) {
+			return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+		} else {
+			return false;
+		}
+	};
+  	
+	
+	this->fileprefix = reader.Get("output", "fileprefix", "output_");
+	std::string filetype = reader.Get("output", "filetype", "hdf5");
+	this->type = AdvancedOutput::iniInputToFileType(filetype);
+	
+	std::string fileExtension = AdvancedOutput::fileTypeToExtension(this->type);
+	
+	
+	std::string fileMode = reader.Get("output", "mode", "single_file");	
+	this->mode = AdvancedOutput::iniInputToFileMode(fileMode);
+	this->path = reader.Get("output", "path", "./");
+	this->trades = new TradeDataSave();
+	this->farmData = new FarmData();
+	this->farmDataTimes = new std::vector<double>();
+	this->intermediateCalvingTimes = new std::vector<double>();
+	this->CowData = new CowDataSave();
+
+	this->farmNum = 0;
+	//this->init()
+} 
+AdvancedOutput::~AdvancedOutput()
+{
+
+  
+ 
+	this->flushStorages();
+	delete this->farmData;
+  	delete this->intermediateCalvingTimes;
+	delete this->trades;
+  	delete this->farmDataTimes;
+	delete this->CowData;
+}
+void AdvancedOutput::logTrade(Trade_Event* event){
+	Cow* c = Cow::get_address( event->id );
+	double destFarmID = (double) event->farm->id;
+	double srcFarmID = (double) c->herd->farm->id;
+	double cowID =  (double) c->id();
+	double CowSex = (double) c->female;
+	TradeDataPoint point = {event->execution_time, srcFarmID, destFarmID, cowID, event->execution_time - c->birth_time, CowSex};
+	
+	this->trades->push_back(new TradeDataPoint(point));
+}
+void AdvancedOutput::logFarms(double time, std::vector< Farm* >*farms){
+	this->farmDataTimes->push_back(time);
+	FarmDataSave * data = new FarmDataSave();
+	for(auto farm : *farms){
+		if(farm->getType() != SLAUGHTERHOUSE && farm->getType() != WELL){
+			int numS = farm->number_of_S();
+			int numPI = farm->number_of_PI();
+			int numTI = farm->number_of_TI();
+			int numR = farm->number_of_R();
+//			if(numS+numPI+numTI+numR <= 0)
+//				exit(9800);
+			FarmDataPoint p = {farm->id, numS, numTI, numPI, numR};
+			data->push_back(new FarmDataPoint(p));
+		}
+	} 
+	this->farmNum = this->farmNum > farms->size() ? farmNum : farms->size();
+	this->farmData->push_back(data);
+}
+
+void AdvancedOutput::logDyingCow(Event* event, Cow* cow){
+	double age = event->execution_time - cow->birth_time;
+	int female = (int) cow->female;
+	double meanCalvingTime = 0.0;
+	double lastCalvingTime = 0.0;
+	
+	int j = 0;
+	while(cow->birthTimesOfCalves[j] != -1.0){
+		
+		if(lastCalvingTime > 0.0 ){	
+			double intermediateCalvingTime = cow->birthTimesOfCalves[j] - lastCalvingTime;	
+			
+			this->intermediateCalvingTimes->push_back(	intermediateCalvingTime );
+			meanCalvingTime += intermediateCalvingTime;
+		}
+			
+		lastCalvingTime = cow->birthTimesOfCalves[j];
+		j++;
+	}
+	if(j >= 3){
+		meanCalvingTime /=(double) (j-2);
+	}
+	double firstCalvingTime = -1.0;
+	if(cow->birthTimesOfCalves[0] != -1.0)
+		firstCalvingTime = cow->birthTimesOfCalves[0] - cow->birth_time;
+	
+//	if(firstCalvingTime < 200 && firstCalvingTime != -1.0){
+//		
+//		std::cout << cow->birth_time << "\t";
+//		for(int i=0; i < j; i++){
+//			std:: cout << cow->birthTimesOfCalves[i] << "\t";
+//		}
+//		std::cout << std::endl;
+//	}
+	CowDataPoint point = {(double) (cow->id()),meanCalvingTime,(double) female,age, (double) (j-1), (double) event->type, firstCalvingTime};
+	this->CowData->push_back(new CowDataPoint(point));
+}
+
+
+
+hid_t AdvancedOutput::open_file( std::string filename , bool overwrite){
+
+  hid_t file_id = H5Fcreate( filename.c_str() ,
+					  overwrite ? H5F_ACC_TRUNC : H5F_ACC_EXCL ,
+					  H5P_DEFAULT,
+					  H5P_DEFAULT);
+  if (file_id < 0 )
+    {
+      std::cerr << "Error while setting up output file with name " << filename << " . . Possible reason: File already exists." << std::endl;
+      exit(1);
+    }
+  return file_id;
+}
+
+void AdvancedOutput::write_to_file(double time){
+
+typedef std::vector<TradeDataPoint*> TradeDataSave;
+		
+		
+	if(this->intermediateCalvingTimes->size() == 0 && this->farmDataTimes->size() == 0 && this->CowData->size() == 0 && this->trades->size() == 0) return;
+
+	std::string filename, listfilename;
+	hid_t file;
+	bool flush = false;
+	std::ofstream outfile;
+	switch(this->mode){
+		case single_file:
+		
+			filename = this->path + this->fileprefix + fileTypeToExtension(this->type);
+
+			this->overwrite = true; //after writing for the first time, we will always be writing to the same file
+			break;
+		case multi_file:
+			flush = true;
+			filename = this->path + this->fileprefix + "_time_" + std::to_string(time) + fileTypeToExtension(this->type);
+			listfilename = this->path + this->fileprefix + "_list.txt";
+			
+
+  			outfile.open(listfilename.c_str(), std::ios_base::app);
+ 			outfile << this->fileprefix + "_time_" + std::to_string(time) + fileTypeToExtension(this->type) << std::endl;
+ 			outfile.close();
+//			std::cerr << "Multifile output is not yet supported. Exiting" << std::endl;
+//			exit(5);
+			break;
+		
+	}
+	file = this->open_file(filename, this->overwrite);
+//		Utilities::printStackTrace(15);
+	this->writeTradeData(file);
+	this->writeFarmData(file);
+	this->writeCowData(file);
+	
+	H5Fclose( file );
+	if(flush)
+		this->flushStorages();
+}
+
+void AdvancedOutput::init(std::string path, std::string fileprefix, std::string filetype, std::string mode, bool overwrite){}
+
+std::string AdvancedOutput::fileTypeToExtension(fileType type){
+	std::string extension = "";
+	switch(type){
+		case HDF5:
+			extension = ".h5";
+	}
+	return extension;
+}
+
+fileType AdvancedOutput::iniInputToFileType(std::string& fileType, bool shallExit){
+	if(fileType.compare("hdf5") != 0){std::cout << "The specified filetype is not supported" <<std::endl;
+		if(shallExit)
+			exit(3);
+	}else{
+		return HDF5;
+	}
+	
+}
+
+fileMode AdvancedOutput::iniInputToFileMode(std::string& fileMode,bool shallExit){
+	if(fileMode.compare("single_file") == 0){
+		return single_file;
+	}else if(fileMode.compare("multi_file") == 0 || fileMode.compare("split_file") == 0){
+		return multi_file;
+	}else{
+		std::cout << "The specified output mode \"" << fileMode <<"\" does not exist" <<std::endl;
+		if(shallExit)
+			exit(4);
+	}
+}
+void AdvancedOutput::writeTradeData(hid_t& file_id){
+	const int rank = TradeDataPoint::size;
+	hsize_t dims[rank] = { this->trades->size(), TradeDataPoint::size, 1, 1, 1 ,1 };
+	
+	
+	if(trades->size() > 0){
+
+		double * data = new double[this->trades->size()*TradeDataPoint::size];
+		int *tradeMatrix;
+		std::vector<int*> *tradeMatrices = new std::vector<int*>();
+		std::vector<double> *tradingTimes = new std::vector<double>();
+		
+		TradeDataSave::iterator it = *new TradeDataSave::iterator();
+
+		double tTemp = -1.0;
+
+		for(it = this->trades->begin(); it != this->trades->end(); it++){
+			double tRead = (*it)->date;
+				if((int) tRead != (int) tTemp){//if there is a new timestep
+					tTemp = tRead;
+					tradingTimes->push_back(tRead);
+					tradeMatrix = new int[this->farmNum * this->farmNum];
+					std::fill_n(tradeMatrix, this->farmNum*this->farmNum, 0); 
+					tradeMatrices->push_back(tradeMatrix);
+				}
+			double* tradeDP = ((double *) *(*it));
+
+			int tradeIndex = (int) ((*it)->srcFarmID * this->farmNum + (*it)->destFarmID);
+			tradeMatrix[tradeIndex]++;
+			for(int i=0; i < TradeDataPoint::size; i++){
+				
+				int index = (int) (it - this->trades->begin()) * TradeDataPoint::size + i;
+				
+				data[index] = tradeDP[i];
+			}
+			 
+			//std::cout << std::endl;
+		}
+		int success = H5LTmake_dataset_double( file_id ,
+						  "/BVD_Trades",
+						  rank,
+						  dims,
+						  data);
+		if(success < 0){
+			std::cerr << "Failed to create trade dataset" << std::endl;
+			exit(12);
+		}
+		
+		const int tradeMatRank = 2;
+		const std::string tablePrefix = "Trades_t";
+               
+		for(int i = 0; i < tradeMatrices->size();i++){
+			const int * mat = (*tradeMatrices)[i];
+			hsize_t num =  static_cast<hsize_t>(this->farmNum );
+			
+		
+			hsize_t tradeDims[rank] = {num, num};
+			
+			double time = (*tradingTimes)[i];
+			std::string tableName = tablePrefix + std::to_string((int)(time));
+			//std::cout << i << " " <<   tableName << " " << time << std::endl; 
+			int tradeSuccess = H5LTmake_dataset_int( file_id ,
+						  tableName.c_str(),
+						  tradeMatRank,
+						  tradeDims,
+						  mat);
+			if(tradeSuccess < 0){
+				std::cout << "failed to create trade matrices table with table name " << tableName << std::endl;
+				exit(16);
+			}
+		}
+		//std::cout << "wrote all trade matrices" << std::endl;
+		hsize_t tradeTimeDim[1] = {tradingTimes->size()};
+		const double* tradeTimeData = &((*tradingTimes)[0]);
+		int tradeTimeSuccess = H5LTmake_dataset_double( file_id ,
+						  "/BVD_Trade_Times",
+						  1,
+						  tradeTimeDim,
+						  tradeTimeData);
+		if(tradeTimeSuccess < 0){
+			std::cerr << "Failed to create trade time dataset" << std::endl;
+			exit(12);
+		}
+//std::cout << "bvd_trad_times geschrieben" << std::endl;
+
+		for(auto mat : *tradeMatrices){delete mat;}
+		delete tradeMatrices;
+		delete tradingTimes;
+		delete data;			
+ 
+	}
+				
+}
+
+void AdvancedOutput::writeFarmData(hid_t& file){
+	
+	if(this->farmData->size() <= 0 || this->farmDataTimes->size() <= 0){
+		return;
+	}
+	hsize_t t_dims[1] = {this->farmDataTimes->size()};
+	const double *timeData = &((*this->farmDataTimes)[0]);
+	int success = H5LTmake_dataset_double( file ,
+				     "/BVD_Farm_Times",
+				     1,
+				     t_dims,
+				      timeData);
+	if(success < 0){
+			std::cerr << "Failed to create farm time dataset" << std::endl;
+			Utilities::printStackTrace(15);
+			exit(14);
+	}
+
+	
+	
+	const int rank = FarmDataPoint::size;
+
+    const std::string tablePrefix = "Farms_t";
+	
+	
+	for(int i=0; i < farmData->size(); i++){
+		FarmDataSave * currentSave = (*farmData)[i];
+		static hsize_t dims[rank] = {currentSave->size(), FarmDataPoint::size, 1,1, 1};
+		double time = (*farmDataTimes)[i];
+
+		 
+		std::string tableName = tablePrefix + std::to_string((int)(time));
+		int * data = new int[currentSave->size()*FarmDataPoint::size];
+		FarmDataSave::iterator it = *new FarmDataSave::iterator();
+		for(it = currentSave->begin(); it != currentSave->end(); it++){
+			int * arr = ((int *) *(*it));
+			for(int i=0; i < FarmDataPoint::size; i++){
+				
+				int index = (int) (it - currentSave->begin()) * FarmDataPoint::size + i;
+				 
+				data[index] = arr[i];
+
+				
+			}
+		}
+
+		int success = H5LTmake_dataset_int( file ,
+						  tableName.c_str(),
+						  rank,
+						  dims,
+						  data);
+		if(success < 0){
+			std::cerr << "Failed to create farm dataset for time " << time << std::endl;
+
+			exit(13);
+		}				
+	}
+	
+
+	
+}
+void AdvancedOutput::writeCowData(hid_t& file_id){
+	
+	if(this->CowData->size() <= 0 || this->intermediateCalvingTimes->size() <= 0){
+
+		return;
+	}
+	
+	
+	hsize_t calvingTime_dims[1] = {this->intermediateCalvingTimes->size()};
+	const double *calvingTimeData = &((*this->intermediateCalvingTimes)[0]);
+	int success = H5LTmake_dataset_double( file_id ,
+				     AdvancedOutput::intermediateCalvingTimeTableName.c_str(),
+				     1,
+				     calvingTime_dims,
+				      calvingTimeData);
+	if(success < 0){
+			std::cerr << "Failed to create farm time dataset" << std::endl;
+			Utilities::printStackTrace(15);
+			exit(14);
+	}
+	
+	const int rank = CowDataPoint::size;
+
+	const std::string tableName = "BVD_Cows";
+
+	hsize_t dims[rank] = { this->CowData->size(), CowDataPoint::size, 1, 1, 1,1,1 };
+	
+	
+
+
+	double * data = new double[this->CowData->size()*CowDataPoint::size];
+
+	CowDataSave::iterator it = *new CowDataSave::iterator();
+
+
+
+	
+	for(it = this->CowData->begin(); it != this->CowData->end(); it++){
+		
+		double* cowDP = ((double *) *(*it));
+		
+		for(int i=0; i < CowDataPoint::size; i++){
+			
+			int index = (int) (it - this->CowData->begin()) * CowDataPoint::size + i;
+			
+			data[index] = cowDP[i];
+		}
+		
+		//std::cout << std::endl;
+	}
+	success = H5LTmake_dataset_double( file_id ,
+					  tableName.c_str(),
+					  rank,
+					  dims,
+					  data);
+	if(success < 0){
+		std::cerr << "Failed to create trade dataset" << std::endl;
+		exit(12);
+	}
+	
+
+	delete data;			
+ 
+}
+
+void AdvancedOutput::flushStorages(){
+	for(auto save : *(this->farmData)){
+		save->clear();
+//		  for(auto dp : *save){
+//			  delete dp;									
+//		  } 
+//		  delete save;
+	  }
+	  this->farmData->clear();
+	  this->farmDataTimes->clear();
+//	for(auto trade : *this->trades){
+//	  	delete trade;
+//  	}
+	this->intermediateCalvingTimes->clear();
+	this->trades->clear();
+//	for(auto cowdata : *this->CowData){
+//	  delete cowdata;
+//  	}
+	this->CowData->clear();
+}

@@ -1,0 +1,29 @@
+Name	Beschreibung	Typ	Bemerkung		
+VON		Datum	
+BIS		Datum	
+GEB_DATR	Geburtsdatum Rindˇ	Datum	
+GESCHL_R	Geschlecht	String	
+RASSE	Rasse	String	http://www.hi-tier.de/Entwicklung/Konzept/_asp/dd00005.asp?txtParam=RASSE&radTestProd=0&radHisto=0&radSuchenExakt=0
+DAT_EIN	Grund Tier in Bestand	Datum	
+TIER_EINX	Tier-Eingang (aufbereitet)ˇ	String	GE=Geburt, ZU=Zugang
+DAT_AUS	Datum Tier aus dem Bestand	Datum	
+TIER_AUSX	Grund Tier aus Bestand	String	"AB=Abgang, TO=Tod, VE=Verendung, HS=Hausschlachtung, AU=Ausfuhr, SC=Schlachtung,
+TOE=Tîtung, SI=Direktimport zur Schlachtung, TR=Transit, DIE=Diebstahl des Tieres,
+VNA=Tier wahrscheinlich verunglÅckt und nicht mehr auffindbar,
+VNI=verendet und Tierkîrper nicht mehr identifizierbar,
+VNN=Verbleib des Tieres nicht nachvollziehbar, wahrscheinlich tot,
+WA=widersprÅchliche Angaben, UN=unbekannt, i.d.R. Datenfehler "
+LAND_URX	Ursprungsland	String	
+GVE	Gro·vieheinheiten	Zahl	0-1
+GEB_DATM	Geburtsdatum Mutter	Datum	Berechnet in Excel, sofern Info vorhanden
+KALB	Kalb ja(1)/nein(0)	Zahl	Berechnet in Excel, sofern Info vorhanden
+ZKZ_M	Zwischenkalbezeit Mutter in Tagen	Zahl	Berechnet in Excel, sofern Info vorhanden
+EKA_M	Erstkalbealter Mutter in Tagen	Zahl	Berechnet in Excel, sofern Info vorhanden
+ALTER	Alter Rind im Bestand in Tagen	Zahl	Berechnet in Excel, sofern Info vorhanden
+ALTER_AB	Alter bei Abgang in Tagen (AB+AU)	Zahl	Berechnet in Excel, sofern Info vorhanden
+ALTER_VE	Alter bei Verendung in Tagen (AB+AU)	Zahl	Berechnet in Excel, sofern Info vorhanden
+ALTER_TOE	Alter bei Tîtung in Tagen (AB+AU)	Zahl	Berechnet in Excel, sofern Info vorhanden
+LOM_Xnew	Ohrmarke Tier anonymisiert		
+LOM_MUTXnew	Ohrmarke Mutterˇanonymisiert		
+BNR15_VBXnew	Betriebsnummer Vorbesitzer anonymisiertˇ		
+BNR15_NBXnew	Betriebsnummer Nachbesitzer anonymisiertˇ		

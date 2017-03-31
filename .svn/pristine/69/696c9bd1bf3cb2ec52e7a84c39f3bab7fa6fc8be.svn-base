@@ -1,0 +1,101 @@
+#ifndef __HDF5Handler_h_
+#define __HDF5Handler_h_
+#include "FileHandler.h"
+#include <vector>
+#include "hdf5.h"
+#include "hdf5_hl.h"
+#include <fstream>
+
+enum fileMode{
+	single_file = 0,
+	multi_file = 1
+};
+
+class Trade_Event;
+class Event;
+class Cow;
+class Farm;
+
+struct TradeDataPoint{
+	double date;
+	double srcFarmID;
+	double destFarmID;
+	double cowID;
+	double cowAge;
+	double cowSex;
+	double operator[] (int i);
+	operator const double*();
+	operator double*();
+	static const int size; 
+};
+
+struct FarmDataPoint{
+	int id;
+	int numberS;
+	int numberTI;
+	int numberPI;
+	int numberR;
+	int operator[] (int i);
+	operator int*();
+	static const int size;
+};
+
+struct CowDataPoint{
+	double id;
+	double meanCalvingTime;
+	double female;
+	double age;
+	double numberOfCalves;
+	double causeOfDeath;
+	double firstCalvingTime;
+	double operator[] (int i);
+	operator double*();
+	static const int size;  
+};
+
+class HDF5FileHandler: public FileHandler{
+	public:
+		HDF5FileHandler(INIReader& reader);
+		~HDF5FileHandler();
+		
+		static const std::string intermediateCalvingTimeTableName;
+		void logFarms(const double time,const std::vector< Farm* >*farms);
+		void logEvent(const Event *e);
+		void logBirth(const Cow *c);
+		void write_to_file(const double time);
+	private:
+		void logInfection(const Event* event,const Cow* cow,const bool didLooseCalf);
+		void logInfectionRateChangeEvent(const Event* event);
+		void logTrade(const Trade_Event* event);
+		hid_t open_file(const std::string filename ,const bool overwrite);
+		void writeTradeData(const hid_t& file);
+		void writeFarmData(const hid_t& file);
+		void writeCowData(const hid_t& file);
+		typedef std::vector<TradeDataPoint*> TradeDataSave;
+		typedef std::vector<FarmDataPoint*> FarmDataSave;
+		typedef std::vector<FarmDataSave *> FarmData;
+		typedef std::vector<CowDataPoint*> CowDataSave;
+		typedef std::vector<CowDataSave* > CowDataSaveStorage;
+		std::vector<double>* farmDataTimes;
+		std::vector<double>* intermediateCalvingTimes;
+		FarmData* farmData;
+		TradeDataSave* trades;
+		CowDataSave* CowData;
+		CowDataSave* InfectionData;
+		CowDataSave* PIDeathSave;
+		CowDataSaveStorage* piStorage;
+		int farmNum;
+		void flushStorages();
+		void writeCowToSave(const Event* event,const Cow* cow, CowDataSave* save);
+		void writeSaveToFile(const hid_t& file, CowDataSave* save,const std::string tableName);
+		CowDataPoint* createCowDataPointForCow(const Event* event,const Cow* cow);
+		void writeLivingPIsToFile(const hid_t& file);
+		bool deleteList;
+		static fileMode iniInputToFileMode(std::string& fileMode,bool shallExit=true);
+		void logDyingCow(const Event* event,const Cow* cow);
+		fileMode mode;
+		std::string fileExtension;
+};
+
+
+#endif

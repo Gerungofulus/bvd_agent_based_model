@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+import numpy as np
+import matplotlib.pyplot as plt
+import csv
+def getColumn(filename, column):
+    results = csv.reader(open(filename), delimiter=";")
+    return [result[column] for result in results]
+    
+def plotCSVFile(fileName, plot = False):
+
+	x = getColumn(fileName, 0)
+	yr = getColumn(fileName, 1)
+	y = [ float(i) for i in yr[1:]]
+	if isinstance(x[0], basestring):
+		plt.xlabel(x[0])
+	if isinstance(yr[0], basestring):
+		plt.ylabel(yr[0])
+	maxy = max(y)
+	miny = min(y)
+	normalized = [i/maxy for i in y ]
+	plt.plot(x[1:len(x)-1],normalized[0:len(normalized)-1])
+	if plot:
+		plt.show()

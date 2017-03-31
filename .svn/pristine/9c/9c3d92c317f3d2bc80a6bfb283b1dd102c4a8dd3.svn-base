@@ -1,0 +1,296 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "from numpy import genfromtxt\n",
+    "import matplotlib.pyplot as plt\n",
+    "import matplotlib.dates as mdates"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 68,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "1444.3940446650124"
+      ]
+     },
+     "execution_count": 68,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "a = np.loadtxt('Liste_AB.txt')\n",
+    "a.mean()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 69,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "80.0"
+      ]
+     },
+     "execution_count": 69,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "a.min()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 70,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "5755.0"
+      ]
+     },
+     "execution_count": 70,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "a.max()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "c = genfromtxt(\"Alter_AB_M.txt\")\n",
+    "d= genfromtxt(\"Alter_AB_W.txt\")\n",
+    "\n",
+    "fig, ax = plt.subplots()\n",
+    "ax.hist(c, bins=np.arange(0, 3000 + 30, 30), alpha=0.5, range=[0, 3000], label='m')\n",
+    "ax.hist(d, bins=np.arange(0, 3000 + 30, 30), alpha=0.5, range=[0, 3000], label='f')\n",
+    "ax.set_xticks([360,720,1080,1440, 1800, 2160,2520,2880])\n",
+    "#ax.xaxis.set_major_formatter(FormatStrFormatter('bin'))\n",
+    "\n",
+    "plt.title('Age when traded') \n",
+    "plt.legend(loc='upper right')\n",
+    "plt.ylabel('Number animals')\n",
+    "plt.xlabel('Days')\n",
+    "plt.grid(True)\n",
+    "\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 42,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "mpl_M = mdates.num2date(c)\n",
+    "mpl_W = mdates.num2date(d)\n",
+    "# plot it\n",
+    "fig, ax = plt.subplots(1,1)\n",
+    "ax.hist(mpl_M, bins=np.arange(min(c), max(d) + 30, 30),alpha = 0.5, label='m')\n",
+    "ax.hist(mpl_W, bins=np.arange(min(c), max(d) + 30, 30),alpha = 0.5, label='f')\n",
+    "ax.xaxis.set_major_locator(mdates.YearLocator())\n",
+    "#ax.xaxis.set_major_formatter(mdates.DateFormatter('%y'))\n",
+    "ax.xaxis.set_major_formatter(mdates.DateFormatter('%M'))\n",
+    "#plt.xticks(np.arange(min(c), max(d)+1, 500))\n",
+    "\n",
+    "plt.title('Number of traded cattle over time') \n",
+    "plt.legend(loc='upper left')\n",
+    "plt.ylabel('Number of traded animals')\n",
+    "plt.xlabel('Time')\n",
+    "\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 71,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<matplotlib.figure.Figure at 0x7fb43c0e16d0>"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "#Alter bei Abgang in Tagen\n",
+    "\n",
+    "a = np.loadtxt('Liste_AB.txt')\n",
+    "  \n",
+    "plt.hist(a, bins=100)\n",
+    "plt.title('Alter bei Abgang in Tagen') \n",
+    "\n",
+    "\n",
+    "plt.show()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 41,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#Alter bei Verendung in Tagen\n",
+    "\n",
+    "b = np.loadtxt('Alter_Verendung.txt')\n",
+    "\n",
+    "fig, ax = plt.subplots()\n",
+    "ax.hist(b, bins=np.arange(0, 3000 + 30, 30), range=[0, 3000], color='orange')\n",
+    "ax.set_xticks([360,720,1080,1440, 1800, 2160,2520,2880])\n",
+    "\n",
+    "\n",
+    "plt.title('Age of natural deaths') \n",
+    "\n",
+    "plt.legend(loc='upper right')\n",
+    "plt.ylabel('Number animals')\n",
+    "plt.xlabel('Days')\n",
+    "plt.grid(True)\n",
+    "\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 49,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "\n",
+    "c = genfromtxt(\"Alter_Toetung_M.txt\")\n",
+    "d= genfromtxt(\"Alter_Toetung_W.txt\")\n",
+    "\n",
+    "fig, ax = plt.subplots()\n",
+    "ax.hist(c, bins=np.arange(0, 3000 + 30, 30), alpha=0.8, range=[0, 3000], color='blue', label='m')\n",
+    "ax.hist(d, bins=np.arange(0, 3000 + 30, 30), alpha=0.8, range=[0, 3000], color='lightgreen', label='f')\n",
+    "ax.set_xticks([360,720,1080,1440, 1800, 2160,2520,2880])\n",
+    "\n",
+    "plt.title('Age when culled') \n",
+    "plt.legend(loc='upper right')\n",
+    "plt.ylabel('Number of culled animals')\n",
+    "plt.xlabel('Days')\n",
+    "plt.grid(True)\n",
+    "\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "# Erstbesamungsalter\n",
+    "a = np.loadtxt('EKA.txt')\n",
+    "b = []\n",
+    "for number in a:\n",
+    "    newnumber = number - 286\n",
+    "    b.append(newnumber)\n",
+    "\n",
+    "fig, ax = plt.subplots()\n",
+    "ax.hist(b, bins=np.arange(0, 3000 + 30, 30), range=[0, 3000], color='blue')\n",
+    "\n",
+    "ax.set_xticks([360,720,1080,1440, 1800, 2160,2520,2880])\n",
+    "    \n",
+    "plt.title('First insemination age') \n",
+    "plt.ylabel('Number animals')\n",
+    "plt.xlabel('Days')\n",
+    "plt.grid(True)\n",
+    "plt.savefig('First_insemination_age.png')\n",
+    "\n",
+    "plt.show()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "a = np.loadtxt('ZKZ.txt')\n",
+    "  \n",
+    "fig, ax = plt.subplots()\n",
+    "ax.hist(a, bins=np.arange(0, 3000 + 30, 30), range=[0, 3000], color='lightblue')\n",
+    "\n",
+    "ax.set_xticks([360,720,1080,1440, 1800, 2160,2520,2880])\n",
+    "    \n",
+    "plt.title('Zwischenkalbzeit') \n",
+    "plt.ylabel('Number animals')\n",
+    "plt.xlabel('Days')\n",
+    "plt.grid(True)\n",
+    "plt.savefig('Zwischenkalbzeit.png')\n",
+    "\n",
+    "\n",
+    "plt.show()"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 2",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.11"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}

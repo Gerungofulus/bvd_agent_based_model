@@ -1,0 +1,6 @@
+install homebrew (if not already installed) as described on http://brew.sh/index_de.html
+install python, pip, matplotlib http://matplotlib.org/faq/installing_faq.html#how-to-install 
+install h5py
+use: xcode-select --install
+use: brew install homebrew/science/hdf5, brew install gsl and brew install clang-omp
+use: make programm

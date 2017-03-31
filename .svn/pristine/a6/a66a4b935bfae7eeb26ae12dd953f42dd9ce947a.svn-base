@@ -1,0 +1,29 @@
+#ifndef __SQLiteHandler_h_
+#define __SQLiteHandler_h_
+#include "FileHandler.h"
+#include <sstream>
+#include <sqlite3.h> 
+#include <sys/stat.h>
+#include <fstream>
+
+class Event;
+class Cow;
+class Farm;
+
+class SQLiteHandler: public FileHandler{
+	public:
+	SQLiteHandler(INIReader& reader);
+	~SQLiteHandler();
+	
+	//void saveCow(const Cow* c);
+	void logFarms(const double time,const std::vector< Farm* >*farms);
+	void logBirth(const Cow* c);
+	void logEvent(const Event *e);
+	//void logDyingCow(const Event* event,const Cow* cow)
+	void write_to_file(const double time=0.0);
+	private:
+		void runSQLQuery(const std::ostringstream& sqlstream);
+		static const std::string eventTableName;
+		static const std::string cowTableName;
+};
+#endif

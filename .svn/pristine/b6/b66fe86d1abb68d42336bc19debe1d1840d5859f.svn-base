@@ -1,0 +1,95 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "import h5py as h5\n",
+    "import numpy as np\n",
+    "import sys\n",
+    "import os\n",
+    "import pandas as pd"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "filenames = []\n",
+    "path = \"\"\n",
+    "listFile = '/Users/pascal/Coding/uni/Masterarbeit/testing_list.txt'\n",
+    "path = os.path.dirname(os.path.abspath(listFile))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "with open(listFile) as f:\n",
+    "    filenames = f.readlines()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<bound method HDFStore.open of <class 'pandas.io.pytables.HDFStore'>\n",
+      "File path: /Users/pascal/Coding/uni/Masterarbeit/testing_time_100.000000.h5\n",
+      "Empty>\n",
+      "[]\n"
+     ]
+    }
+   ],
+   "source": [
+    "columns=['Date','SRC','DEST','cow','age','sex']\n",
+    "\n",
+    "for h5file in filenames:\n",
+    "    fullpath = (path+\"/\"+h5file).strip()\n",
+    "    store = pd.HDFStore(fullpath, 'r')\n",
+    "    print store.open\n",
+    "    print store.keys()\n",
+    "    store.close()\n",
+    "    #pd.read_hdf(fullpath, 'BVD_Farm_Times')\n",
+    "    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python [conda root]",
+   "language": "python",
+   "name": "conda-root-py"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}

@@ -1,0 +1,39 @@
+All changes are documented in means of revision numbers of the svn repository
+
++++ most recent revision +++
+Fixed a warning for AdvancedOutput.cpp:499
+Added vector of Cow trade Criteria as a priority list to the market.h
+Added ignoreTypeOfDemand=true to ini file and market. If this is set to true, the offer-demand-matching by the market does not rely on the actual demand posted. It follows priority system. Priorities have been set by Inia.
++++ 63 +++
+fixed some bugs that would only affect compiling on Linux
++++ r59 +++
+implemented dumping behaviour for the market
++++ r58 +++
+Added further trade criteria and made herds compatible with an arbitrary amount of trade criteria.
++++ r57 +++
+Changed market so that it can handle an arbitrary number of trade criteria
++++ r56 +++
+added class for reading csv files
++++ r55 +++
+Added quick and dirty multiple file support for python scripts „plotGlobalEndemicBehaviour.py“, „meanLifetime.py“, „plotSystemBehaviour.py“, „plotTradingAgeDistribution.py“
+Added new dataset BVD_intermediate_calving_times to output data and changed the according python scripts.
+Fixed a bug that prevented the last file to contain any data in multi file output mode.
+
+
++++ r54 +++
+Fixed some bugs with trading thresholds
+Added first calving time to cow output
+Added plot of first calving time to meanLifetime.py
+Changed Algorithm for calculation of mean intermediate calving time -> increase
+Fixed the behaviour of the CowWellFarm so it properly produces the same time of birth for the first calves as the rest of the system.
+
++++ r53 +++
+
+Added age of cows being traded to output.
+Added sex of cows too trade output.
+Added cause of death to cow output.
+
++++ r52 +++
+
+Applied some bugfixes on the farm managers. 
+Added CHANGELOG.txt, README.txt and installLinuxManual.txt

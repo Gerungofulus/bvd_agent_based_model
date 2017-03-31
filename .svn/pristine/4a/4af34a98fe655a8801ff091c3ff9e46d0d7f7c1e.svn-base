@@ -1,0 +1,99 @@
+### This ini file defines the behaviour of our simulation. Almost all properties of the system can be set here withoud modifying the code itself
+
+[simulation]
+#The following to lines define the starting time of our system end the end time
+t_start=0.0
+t_end = 15000.0
+dt_log = 1.0
+dt_output = 100
+
+
+[system]
+type=rndFarms 
+#type=inputFarmFile #not implemented
+
+[input]
+
+#networkfile #not implemented
+
+[modelparam]
+#default: 0.02 #1 equals 100% 0 equals 0%
+populationPercentagePI=0.002
+
+#default: 0.02 
+populationPercentageTI=0.00
+
+#default: true
+PercentagesShallBeAppliedOnWells=true 
+
+#default: 0 
+numberOfFarms = 10
+#default: 0
+numberOfSlaughterHouses = 1 
+#default: 0o
+numberOfWells = 1
+
+smallFarmSizeMax = 20
+farmsize_min = 20
+farmsize_max = 2000
+inifileName = ./Statistiken_Cattle/Rinder-Statistiken/Betriebsgroessen_TH.csv
+
+#have cows introduced at different farms at different times
+inputCows=true 
+inputCowNum = 1
+
+[inputCow1]
+farmID = 500
+cowAge = 300
+infection_status = PERSISTENTLY_INFECTED
+Calf_Status = PERSISTENTLY_INFECTED
+introductiontime = 1500
+
+
+
+
+[farmmanager]
+#default:20
+threshold_buy=0
+#default:20
+threshold_sell=0
+#default:20
+numberOfCowsInWell=1000
+#dumping capacity in a slaughterhouse default:20
+dumpingCapacityPerType = 10000
+standardOfferingMethod = evenlyDistributed #OldCowsFirst, NONE
+
+#standardOfferingMethod = OldCowsFirst
+
+
+[trade]
+#default:demand
+#slaughterHouseType=demand 
+slaughterHouseType=dump 
+#default:0.279
+percentage_replacement = 0.279 
+#default: YEARLY
+percentage_time = YEARLY 
+ #default: regular #not implemented
+tradeMode = regularly
+#defualt: DAILY Others: WEEKLY, MONTHLY, QUARTERLY, HALFYEARLY, YEARLY
+tradeRegularity = WEEKLY
+#default: false
+ignoreTypeOfDemand=true 
+
+[containment]
+eartagStart = 3000
+eartagEnd = 10000
+retestingTimeBlood = 7
+bloodTestAccuracy = 0.99
+
+[output]
+filetype=hdf5
+fileprefix=thuringia500
+#mode=single_file
+mode=split_file 
+path=../
+overwrite=true
+
+[rng]
+#seed

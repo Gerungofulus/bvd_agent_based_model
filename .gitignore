@@ -1,0 +1,8 @@
+*.o
+*.h5
+./Rinder-Statistiken/*
+Statistiken_Cattle/*
+ADEVS_Style/*
+*.sh
+bvd_agent_simulation
+*dSYM

@@ -1,0 +1,70 @@
+#ifndef __market_h_
+#define __market_h_
+#include <set>
+#include "Cow.h"
+
+class System;
+class Farm;
+class TradingFilter;
+class CowWellFarm;
+class Slaughterhouse;
+class Offer
+{
+	public:	
+		Offer(Cow::Set* cows, Farm* src);
+		~Offer();
+		Cow::Set* getCows();
+	
+	
+		Cow::Set* cows; 
+		Farm* src;
+};
+class Demand
+{
+	public:
+	Demand(Cow_Trade_Criteria criteria, int number, Farm* source);
+	~Demand();
+	
+	Cow_Trade_Criteria crit;
+	int numberOfDemandedCows;
+	Farm* src;
+};
+
+class Market
+{
+ public:
+  Market( System* system);
+  ~Market();
+  void register_offer( Offer * offer);
+  void register_demand( Demand *demand);
+	void flushQueues();
+  
+  void registerSourceFarm(CowWellFarm* f);
+  void registerSlaughterHouse(Slaughterhouse* sl);
+  
+  private:
+  	typedef std::queue<Cow*> cowqueue;
+  	typedef std::queue<Demand*>  demandqueue;
+  	typedef std::vector<cowqueue* > cowQvec;
+  	typedef std::vector<demandqueue*> cowDvec;
+  	
+  	void matchTradingPartners(std::queue<Cow*>* offerQueue, std::queue<Demand*>* demandQueue);
+  	void matchDemandToOfferQueue(Demand* demand, std::queue<Cow*>* offerQueue); 
+  	std::pair<std::queue<Cow*>*, std::queue<Demand*>*> getRelevantQueues(Cow_Trade_Criteria crit);
+  	bool scheduleTrade(Trade_Event* event);
+  	System *s;
+  	
+  	cowQvec* cowQs;
+  	cowDvec* demandQs;
+  	
+  	bool dump;
+  	std::vector<Slaughterhouse*>* slaughterHouses;
+  	std::vector<CowWellFarm*>* sources;
+  	std::vector<TradingFilter*>* filters;
+  	bool ignoreTypeOfDemand;
+  	std::vector<Cow_Trade_Criteria> *buyingQueueTradeCriteriaPriorities;
+  	
+};
+
+
+#endif

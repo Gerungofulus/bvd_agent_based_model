@@ -1,0 +1,85 @@
+### This ini file defines the behaviour of our simulation. Almost all properties of the system can be set here withoud modifying the code itself
+
+[simulation]
+#The following to lines define the starting time of our system end the end time
+t_start=0.0
+t_end = 2000.0
+dt_log = 1.0
+dt_output = 100.
+
+
+[system]
+type=rndFarms 
+#type=inputFarmFile #not implemented
+
+[input]
+#farmFile #not implemented
+#networkfile #not implemented
+
+[modelparam]
+#default: 0.02 #1 equals 100% 0 equals 0%
+populationPercentagePI=0.02
+
+#default: 0.02 
+populationPercentageTI=0.02
+
+#default: true
+PercentagesShallBeAppliedOnWells=true 
+
+#default: 0 
+numberOfFarms =50 
+#default: 0
+numberOfSlaughterHouses = 1 
+#default: 0
+numberOfWells = 1 
+
+#default:10
+farmsize_min=100.0
+
+#default:1000
+farmsize_max=1000.0
+
+#default: 0
+age_dist_min=0.0
+#default: 3500
+age_dist_max=3500.0
+#default: 200
+age_dist_mod=200.0
+
+
+
+[farmmanager]
+#default:20
+threshold_buy=20
+#default:20
+threshold_sell=5 
+#default:20
+numberOfCowsInWell=1000
+#dumping capacity in a slaughterhouse default:20
+dumpingCapacityPerType = 10000
+
+
+[trade]
+#default:demand
+slaughterHouseType=demand 
+#slaughterHouseType=dump #not implemented
+#default:0.279
+percentage_replacement = 0.279 
+#default: YEARLY
+percentage_time = YEARLY 
+ #default: regular #not implemented
+tradeMode = regularly
+#defualt: DAILY Others: WEEKLY, MONTHLY, QUARTERLY, HALFYEARLY, YEARLY
+tradeRegularity = DAILY 
+
+
+[output]
+filetype=hdf5
+fileprefix=output1234
+mode=single_file
+#mode=split_file #not supported yet
+path=../BVD_output/
+overwrite=true
+
+[rng]
+#seed

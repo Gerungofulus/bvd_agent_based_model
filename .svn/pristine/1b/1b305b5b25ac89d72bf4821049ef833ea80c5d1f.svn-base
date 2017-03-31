@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+#import plotGlobalEndemicBehaviour
+import matplotlib.pyplot as plt
+import numpy as np
+
+import os
+import sys
+abs_script_dir = os.path.dirname(os.path.abspath(__file__))
+execfile(os.path.join(abs_script_dir, "retrieveBreedingDynamics.py"))
+execfile(os.path.join(abs_script_dir, "retrieveTradeData.py"))
+
+
+plt.figure(1)
+plt.title("Breeding and trading dynamics of female cows in dependence of their age")
+plt.xlabel("Age in days")
+plt.ylabel("log(number of cows)")
+
+plt.plot(femaleAgeHistXNaturalDeath[0:printTillAge-1], np.log10(femaleAgeHistYNaturalDeath), label="age of female cows with natural death")
+plt.plot(femaleAgeHistXSlaughtered[0:printTillAge-1], np.log10(femaleAgeHistYSlaughtered), label="age of female cows when slaughtered")
+plt.plot(tradingAgeFemaleX[0:printTillAge-1], np.log10(tradingAgeFemaleY), label="age of female cows when traded")
+plt.legend()
+
+
+
+plt.figure(2)
+plt.title("Breeding and trading dynamics of male cows in dependence of their age")
+plt.xlabel("Age in days")
+plt.ylabel("log(number of cows)")
+
+plt.plot(maleAgeHistXNaturalDeath[0:printTillAge-1], np.log10(maleAgeHistYNaturalDeath), label="age of male cows with natural death")
+plt.plot(maleAgeHistXSlaughtered[0:printTillAge-1], np.log10(maleAgeHistYSlaughtered), label="age of male cows when slaughtered")
+plt.plot(tradingAgeMaleX[0:printTillAge-1], np.log10(tradingAgeMaleY), label="age of male cows when traded")
+plt.legend()
+
+
+plt.show()
+
+
+

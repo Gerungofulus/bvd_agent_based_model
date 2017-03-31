@@ -1,0 +1,60 @@
+* Questions
+** Pertaining to breeding
+1. male animals. Taken into account in the simulation?
+2. How long does it take until we know insemination success?
+3. How do we match up the IDs in the simulation and those in the data?
+4. How do we incorporate the finite lifespan of cows.
+   1. Cows are sent to the slaughterhouse after their last calve, so this is in the data
+   2. Cows only calve a finite number of times (how often?) so this would mean that death resp. transport to the slaughterhouse is determined by the simulated dynamics.   
+5. Twins, how likely? Incorporate into simulation?
+6. Attention when calculating conditional probabilities
+   e.g. when checking first whether pregnancy leads to abort, and then, whether pregnancy leads to dead birth, the second probability is a conditional one.
+7. Does abortion count as calving?
+   Before 8th month no
+8. is instant removal of PI calves realistic? No!
+   Test within 8-9 days. Removal of PI can take up to 6 months. Most of them 2-3 weeks.
+9. If there are subgroups of animals which are separately kept, how are these organized (e.g. by age) could they be organized by infection status ("quarantine..")
+   Separation of animals depends on state. 
+** Pertaining to disease dynamics
+1. is the contagion probability calculated by taking the number of animals that actually become sick.
+   If yes, then in the simulation, the probability is different, because first the event "becomes infected" is executed and then it is checked for MA (or existing TI) or R.
+2. If abort happens by infection, how much time between infection and abort?
+   Short: two weeks
+3. In the table, a value for the transmission probability is given. What does the transmission probability mean exactly. How does the number (density) of infected animals play a role here?
+4. In VIE04, there is a difference in the calf outcome. for "immune" and MA. Is "immune" immune for life?
+5. If a mothercow becomes ill (more or less) directly after birth, is there an increased probability for the calf to become infected?
+   They are separated within 2 days.
+Calves are in separate compartments
+Separation not complete.
+* Mail to Jörn
+Hello Jörn,
+ 
+we're about to set up the concept of the breeding and disease dynamics and have some questions about the conditions that you might be able to answer.
+ 
+1. Are male animals taken into account in the simulation? When are they taken out of the herd?
+2. How likely is it that twins are born?
+3. How long does it take until calves are screened, until PI calves are removed from the herd?
+4. How likely it it that a second screening is done when the first screening was positive? How long until 2nd test?
+5. Are the animals kept in subgroups depending of their age?
+6. There's a chance that the virus mutates and causes MD. Do we need to take this into account? Especially when 
+7. How long does it take until we know that insemination was successful?
+8. Is a calve if the infection of the mother has ended before the begin of the pregnancy.
+9. In the paper by Viet et al. (2004), there are two categories for immunity in calves: "immune" and "Maternal Antibodies(MA)". In the handout for the BVD simulation there is only a category "immune". Does this matter? Should MA be taken into account?
+10. Does abortion count as calving? (Important, when takinginto account that cows after the 9th calving are executed.)
+11. Can we apply the formula for the infection rate of VIE04 directly? It doesn't seem to make sense if e.g. all animals in a herd are TI (or PI). Or posed differently: What does the transmission probability mean exactly. How does the number (density) of infected animals play a role here?
+12. If an abort happens by infection, how much time passes between infection and abort?
+13. In the table "Infektionsparameter" in the handout, what does "Schutz durch maternale AK" exactly give us? The duration that the MA protection lasts or the quality of protection (gradually sinking after 30 days).
+
+
+PI -> 98/2
+MA -> 4/96
+S  -> 2/98
+* Things to do/change
+- model the MA protection by a different infection rate instead of withinthe handling of an 'gets infected' event.
+- Farm consists of stables/herds
+- in each stable/herd, have a separate list of TI, PI, S, R and MA animals
+- PI ->infection rate change
+* Implementation
+- Change Cow Lists to Lists of Pointers to COws.
+- What happens to events pertaining to a cow, when this cow moves to another farm/herd?
+ -> Will we need a global event queue?

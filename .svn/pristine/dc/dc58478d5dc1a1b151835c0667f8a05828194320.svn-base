@@ -1,0 +1,17 @@
+ADEVS_PREFIX = ../adevs-3.0
+CFLAGS = -Wall -g -pedantic -fopenmp
+CC = g++
+INCLUDE = -I${ADEVS_PREFIX}/include
+
+.SUFFIXES: .cpp
+.cpp.o:
+	${CC} -c ${CFLAGS} ${INCLUDE} $<
+
+all: 	
+	#cd src && $(make)
+	$(MAKE) -C src/
+	#$(MAKE) -C tests
+tests:
+	$(MAKE) -C tests
+clean: 
+	rm -f *.o core a.out 

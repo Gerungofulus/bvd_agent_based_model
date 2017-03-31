@@ -1,0 +1,57 @@
+#include "Initializer.h"
+#include "System.h"
+#include "Output.h"
+#include <iostream>
+#include "BVD_Random_Number_Generator.h"
+#include <chrono>
+
+
+int main()
+{
+  std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
+
+  // Step 1: Create an instance of System,
+  // Arguments givenhere are start time of the simulation, filename for output, and a bool indicating whether the file for output can be overwritten when it exists or not.
+  // For more possible arguments see System.h
+  #ifdef _DEBUG_
+		std::cout << "creating system" << std::endl;
+	#endif
+  System * s = System::getInstance(0 , "example.h5" , false );
+
+  // Step 2: Initialization (initial conditions)
+  // You can initialize by hand if you prefer to, however the Initializer class does this for you (in a certain way of course.)
+  // For detailed instructions see Initializer.h
+  Initializer init;
+  #ifdef _DEBUG_
+	std::cout << "set init stuff" << std::endl;
+  #endif
+  init.set_default_number_of_PI_animals_in_farm( 1 );
+
+  init.set_number_of_farms( 3000 );
+  init.set_number_of_slaughterhouses( 2 );
+  init.set_number_of_PI_animals_in_farm( 0, 0); // No PI in the system should result in a very different trajectory..
+  init.set_age_distribution_in_farm(     0, 4 , 2000, 800 );
+	#ifdef _DEBUG_
+		std::cout << "initialize system" << std::endl;
+	#endif
+  init.initialize_system ( s );
+
+  // Step 3: Log initial state
+  s->log_state();
+  s->output->write_to_file();
+
+  //Step 4: Set custom log and write intervals (if desired) and start the simulation
+  s->set_log_interval(1);
+  s->set_write_interval(100);
+
+  s->run_until(4000);
+	std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::minutes>( t2 - t1 ).count();
+	std::cout << "The simulation took " << duration << " minutes" << std::endl;
+  //Step 5: The system s now contains all cows, farms, events etc. as they result from the run.
+  // Output has been written to file as desired and can be used.
+  // Tests on the system state, further runs continuing from this state are possible.
+  
+  // However, we quit here, by explicitly deleting s, which prints one line of total stats (how many events and cows have been processed.)
+  //delete s;
+}

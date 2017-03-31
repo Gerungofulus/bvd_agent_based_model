@@ -1,0 +1,17 @@
+#ifndef __small_one_herd_farm_manager_h_
+#define __small_one_herd_farm_manager_h_
+#include "FarmManager.h"
+#include "projectImports/inih/cpp/INIReader.h"
+class SmallFarmManager: public FarmManager{
+	public:
+		SmallFarmManager(Farm* farm,System *s);
+		~SmallFarmManager();
+		
+	private:
+		void calculateDemand(std::set<Demand*>* requests);//requests which are created in this function will be deleted in
+		int calculateNumberOfAnimalsPerGroup(Cow_Trade_Criteria criteria,int overallNumber,int groupNum, Cow::Set* cows);
+		void chooseCowsToOfferFromGroupAndAddToSellingGroup(int numberOfCowsToSell, Cow_Trade_Criteria crit, Cow::Set* cows); 
+		
+};
+
+#endif

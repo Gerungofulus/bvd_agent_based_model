@@ -1,0 +1,67 @@
+#!/usr/bin/env python
+abs_script_dir = os.path.dirname(os.path.abspath(__file__))
+execfile(os.path.join(abs_script_dir, "openHDF5file.py"))
+execfile(os.path.join(abs_script_dir, "outputSpecification.py"))
+
+
+
+
+h5cows = f[deadCowTableName]
+cows = h5cows[:,:].astype(float)
+h5IntermediateCalvingTimes = f[intermediateCalvingTimesTableName]
+
+intermediateCalvingTimesFile = h5IntermediateCalvingTimes[:].astype(float)
+
+numberOfFemales = 0
+numberOfMales = 0
+if not 'femaleCowAges' in globals():
+    sorted_by_age = sorted(cows, key=lambda tup: tup[cowAgeIndex])
+    femaleCowAges = []
+    maleCowAges = []
+    femaleCowAgeSlaughtered = []
+    maleCowAgeSlaughtered = []
+    femaleCowAgeNaturalDeath = []
+    maleCowAgeNaturalDeath = []
+    meanCalvingTimes = []
+    firstCalvingTimes = []
+    intermediateCalvingTimes = []
+
+intermediateCalvingTimes.extend(intermediateCalvingTimesFile)
+for cow in cows:
+	if cow[cowSexIndex] == cowFemale:
+		numberOfFemales += 1
+		femaleCowAges.append(cow[cowAgeIndex].astype(float))
+		if cow[cowNumberOfCalvesIndex] >= 2.0: #mean intermediate calving time is only useful when there are more than 2 calves
+			meanCalvingTimes.append(cow[cowMeanCalvingTimeIndex])
+		if cow[cowCauseOfDeathIndex] == cowDeathReasonNatural:
+			femaleCowAgeNaturalDeath.append(cow[cowAgeIndex].astype(float))
+		else:
+			femaleCowAgeSlaughtered.append(cow[cowAgeIndex].astype(float))
+		if cow[cowFirstCalvingTimeIndex] != cowInvalidFirstCalvingTime:
+			firstCalvingTimes.append(cow[cowFirstCalvingTimeIndex])
+	else:
+		numberOfMales += 1
+		maleCowAges.append(cow[cowAgeIndex].astype(float))
+		if cow[cowCauseOfDeathIndex] == cowDeathReasonNatural:
+			maleCowAgeNaturalDeath.append(cow[cowAgeIndex].astype(float))
+		else:
+			maleCowAgeSlaughtered.append(cow[cowAgeIndex].astype(float))
+
+print(str(numberOfFemales) + " female cows")
+print(str(numberOfMales) +  " male cows")
+
+meanCalvingTimeY, meanCalvingTimeX = np.histogram(meanCalvingTimes, bins = range(0,plotMeanCalvingTimeTillAge))
+intermediateCalvingTimesY, intermediateCalvingTimesX = np.histogram(intermediateCalvingTimes, bins = range(0,plotMeanCalvingTimeTillAge))
+firstCalvingTimeY, firstCalvingTimeX = np.histogram(firstCalvingTimes, bins = range(plotFirstCalvingTimeStartingAtAge,plotFirstCalvingTimeTillAge))
+
+femaleAgeHistY, femaleAgeHistX = np.histogram(femaleCowAges, bins=range(0,printTillAge))
+
+femaleAgeHistYSlaughtered, femaleAgeHistXSlaughtered = np.histogram(femaleCowAgeSlaughtered, bins=range(0,printTillAge))
+femaleAgeHistYNaturalDeath, femaleAgeHistXNaturalDeath = np.histogram(femaleCowAgeNaturalDeath, bins=range(0,printTillAge))
+maleAgeHistYSlaughtered, maleAgeHistXSlaughtered = np.histogram(maleCowAgeSlaughtered, bins=range(0,printTillAge))
+maleAgeHistYNaturalDeath, maleAgeHistXNaturalDeath = np.histogram(maleCowAgeNaturalDeath, bins=range(0,printTillAge))
+
+maleAgeHistY , maleAgeHistX = np.histogram(maleCowAges, bins=range(0,printTillAge))
+
+maleAgeNormal = [i/max(maleAgeHistY) for i in maleAgeHistY]
+femaleAgeNormal = [i/max(femaleAgeHistY[5:1000]) for i in femaleAgeHistY[:].astype(float)]

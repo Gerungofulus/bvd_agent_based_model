@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+import matplotlib.pyplot as plt
+
+import numpy as np
+
+from math import log
+import os
+import sys
+
+abs_script_dir = os.path.dirname(os.path.abspath(__file__))
+
+filenames = []
+path = ""
+if sys.argv[1].lower().endswith('.txt'):
+    path = os.path.dirname(os.path.abspath(sys.argv[1]))
+    with open(sys.argv[1]) as f:
+        filenames = f.readlines()
+elif sys.argv[1].lower().endswith('.h5'):
+    filenames.append(sys.argv[1])
+else:
+    print("no valid file given")
+    sys.exit(1)
+for file in filenames:
+    if not path == "":
+        sys.argv[1] = (path+"/"+file)
+    else:
+        sys.argv[1] = file
+    execfile(os.path.join(abs_script_dir, "retrieveTradeData.py"))
+
+
+
+
+#logAges = [log(i, 10) for i in ageYAxis]
+plt.figure(1)
+plt.plot(tradingAgeX[0:printTillAge-1], tradingAgeY, label="age of cows when traded")
+plt.title('age distribution of cows when traded in the simulation')
+plt.xlabel('time in days')
+plt.ylabel('number of cows')
+plt.figure(2)
+plt.plot(tradingAgeX[0:printTillAge-1], np.log10(tradingAgeY), label="age of cows when traded")
+plt.title('logarithmic plot of the age distribution of cows when traded in the simulation')
+plt.xlabel('time in days')
+plt.ylabel('number of cows')
+plt.show()

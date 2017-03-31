@@ -1,0 +1,230 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "import itertools as it\n",
+    "import operator as op\n",
+    "from collections import Counter\n",
+    "import numpy as np\n",
+    "import matplotlib.dates as mdates\n",
+    "import matplotlib.pyplot as plt\n",
+    "from datetime import datetime\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "date_EIN= np.genfromtxt(\"Gesamtbestand_ein.txt\", delimiter=',',unpack = True, converters={ 0: mdates.strpdate2num('%d.%m.%Y') or 0})\n",
+    "date_AUS= np.genfromtxt(\"Gesamtbestand_aus.txt\", delimiter=',',unpack = True, converters={ 0: mdates.strpdate2num('%d.%m.%Y') or 0})\n",
+    "\n",
+    "ein = Counter(date_EIN)\n",
+    "aus = Counter(date_AUS)\n",
+    "\n",
+    "delta = {k:ein.get(k,0)-aus.get(k,0) for k in set(it.chain(ein,aus))}\n",
+    "\n",
+    "cumulative = {}\n",
+    "population = 0\n",
+    "for date in sorted(delta):\n",
+    "    population += delta[date]\n",
+    "    cumulative[date] = population\n",
+    "    #print '{}: {}'.format(date, population)\n",
+    "    \n",
+    "newtime = mdates.num2date(cumulative.keys())\n",
+    "\n",
+    "fig = plt.figure()\n",
+    "ax = fig.add_subplot(111)\n",
+    "\n",
+    "plt.plot(newtime, cumulative.values(), '-', color='blue')\n",
+    "\n",
+    "ax.xaxis.set_major_locator(mdates.YearLocator())\n",
+    "#ax.xaxis.set_major_formatter(mdates.DateFormatter('%y'))\n",
+    "ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))\n",
+    "plt.xticks(np.arange(min(cumulative.keys()), max(cumulative.keys())+1, 500))\n",
+    "\n",
+    "plt.title('Population over time') \n",
+    "plt.xlabel('Time')\n",
+    "plt.ylabel('Population')\n",
+    "plt.grid(True)\n",
+    "\n",
+    "\n",
+    "plt.show()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": [
+    "date_EIN= np.genfromtxt(\"Gesamtbestand_ein.txt\", delimiter=',',unpack = True, converters={ 0: mdates.strpdate2num('%d.%m.%Y') or 0})\n",
+    "date_AUS= np.genfromtxt(\"Gesamtbestand_aus.txt\", delimiter=',',unpack = True, converters={ 0: mdates.strpdate2num('%d.%m.%Y') or 0})\n",
+    "\n",
+    "ein = Counter(date_EIN)\n",
+    "aus = Counter(date_AUS)\n",
+    "\n",
+    "delta = {k:ein.get(k,0)-aus.get(k,0) for k in set(it.chain(ein,aus))}\n",
+    "\n",
+    "cumulative = {}\n",
+    "population = 0\n",
+    "for date in sorted(delta):\n",
+    "    population += delta[date]\n",
+    "    cumulative[date] = population\n",
+    "    #print '{}: {}'.format(date, population)\n",
+    "\n",
+    "fig = plt.figure()\n",
+    "ax = fig.add_subplot(111)\n",
+    "\n",
+    "plt.plot(cumulative.keys(), cumulative.values(), '-', color='blue')\n",
+    "\n",
+    "#ax.xaxis.set_major_locator(mdates.YearLocator())\n",
+    "#ax.xaxis.set_major_formatter(mdates.DateFormatter('%y'))\n",
+    "#ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))\n",
+    "plt.xticks(np.arange(min(cumulative.keys()), max(cumulative.keys())+1, 1000))\n",
+    "\n",
+    "plt.title('Population over time') \n",
+    "plt.xlabel('Time')\n",
+    "plt.ylabel('Population')\n",
+    "plt.grid(True)\n",
+    "\n",
+    "\n",
+    "plt.show()\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [],
+   "source": [
+    "#Liste mit neuen cumulative.values >\n",
+    "\n",
+    "newrange = dict((k, v) for k, v in cumulative.items() if k >= 731950)\n",
+    "\n",
+    "varianz=np.var(newrange.values())          # varianz\n",
+    "mittel=np.mean(newrange.values())         # arithm. mittel (\"durchschnitt\")\n",
+    "standard=np.sqrt(np.var(newrange.values())) # standardabweichung \n",
+    "\n",
+    "# Calculate the simple average of the data\n",
+    "y_mean = [np.mean(newrange.values()) for i in newrange.keys()]\n",
+    "\n",
+    "fig = plt.figure()\n",
+    "ax = fig.add_subplot(111)\n",
+    "\n",
+    "ax.plot(newrange.keys(), y_mean, '-', color='red', label = 'mean=1208.451')\n",
+    "ax.plot(cumulative.keys(), cumulative.values(), '-', color='blue', label='with standard deviation = 24.671')\n",
+    "\n",
+    "ax.xaxis.set_major_locator(mdates.YearLocator())\n",
+    "#ax.xaxis.set_major_formatter(mdates.DateFormatter('%y'))\n",
+    "ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))\n",
+    "plt.xticks(np.arange(min(cumulative.keys()), max(cumulative.keys())+1, 1000))\n",
+    "\n",
+    "plt.title('Population over time') \n",
+    "plt.xlabel('Time')\n",
+    "plt.ylabel('Population')\n",
+    "plt.grid(True)\n",
+    "plt.legend(loc='lower right')\n",
+    "\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "608.64037940619448"
+      ]
+     },
+     "execution_count": 8,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "varianz"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 33,
+   "metadata": {
+    "collapsed": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "1209.1389067524117"
+      ]
+     },
+     "execution_count": 33,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "varianz=np.var(newrange.values())          # varianz\n",
+    "mittel=np.mean(newrange.values())         # arithm. mittel (\"durchschnitt\")\n",
+    "standard=np.sqrt(np.var(newrange.values())) # standardabweichung \n",
+    "\n",
+    "mittel"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 2",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.11"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}
