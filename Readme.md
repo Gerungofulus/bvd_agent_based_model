@@ -34,4 +34,8 @@ This project has been developed during a collaboration of Philipp Hövel and his
 The code was started in November 2015 by Thomas Isele, PhD and then continued by Inia Steinbach, M.Sc. and Pascal Blunk, M.Sc.. The data for the simulation as well as all information on the disease as well as German legislation was provided by Jörn Gethmann, PhD (FLI) and Hartmut Lentz, PhD (FLI).
 
 Jason Bassett is going to be the guy mainly responsible for the code on the site of TU Berlin, while Pascal Blunk is still going to contribute to this project. 
+
+## Includes from other projects
+The directory `projectImports` includes those libraries provided by other sources. By now it only contains a project called `inih` [https://github.com/benhoyt/inih](https://github.com/benhoyt/inih). It's license is the BSD License and can be found in the corresponding folder.
+
 # Research 
