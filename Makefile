@@ -1,7 +1,7 @@
 OS := $(shell uname -s)
 CFLAGS = -Wall -g -pedantic -fopenmp #-D_DEBUG_ # -D _OUTPUT_DEBUG_ #-D_FARM_MANAGER_DEBUG_ -D_INITIALIZER_DEBUG_ -D_HERD_DEBUG_   -D_MARKET_DEBUG_
 CCFLAGS = -std=c++11 $(CFLAGS)
-LFLAGS = -lgsl -lgslcblas -lm -lhdf5 -lhdf5_hl -lsqlite3  
+LFLAGS = -lgsl -lgslcblas -lm -lhdf5 -lhdf5_hl -lsqlite3
 ifeq ($(OS),Darwin)#MacOS
 CC = clang-omp++
 CCC = clang-omp
@@ -9,53 +9,72 @@ else
 CC = g++
 CCC = g++
 endif
-INCLUDE = -I/usr/include -I/usr/include/hdf5/serial -I/usr/local/include -I. -I./projectImports/inih/
+SRCDIR := src
+BUILDDIR := build
+TARGET := build/bvd_agent_simulation
+SRCEXT := cpp
+SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
+OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+INC = -I/usr/include -I/usr/include/hdf5/serial -I/usr/local/include -I. -I./projectImports/inih/ -I include
 LD_INCLUDE= -L/usr/lib/x86_64-linux-gnu/serial -L/usr/lib -L/usr/lib/x86_64-linux-gnu/
-LD_INCLUDE= -L.
-
-#next two lines go for ini reader lib
+#LD_INCLUDE= -L.
+#
+# #next two lines go for ini reader lib
 SRC = projectImports/inih/ini.c
 OBJ = $(SRC:.c=.o)
+$(TARGET): $(OBJECTS)
+	@echo " Linking..."
+	@echo " $(CC) $^ -o $(TARGET) $(LFLAGS)"; $(CC) $^ -o $(TARGET) $(LFLAGS)
 
-ALL = FileHandler.o HDF5Handler.o SQLiteHandler.o ini.o INIReader.o TradeFilter.o Utilities.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o SmallFarmManager.o Small_One_Herd_Farm.o Simple_One_Herd_Farm.o Output.o  Slaughterhouse.o Market.o SlaughterHouseManager.o SimpleFarmManager.o FarmManager.o CommandlineOptions.o BVDOptions.o AdvancedOutput.o CowWellFarmManager.o CowWellFarm.o  programm.o 
+$(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
+	@mkdir -p $(BUILDDIR)
+	@echo " $(CC) $(CFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $<
 
-.SUFFIXES: .cpp
-.cpp.o:
-	${CC} -c ${CCFLAGS} ${INCLUDE} $<
-.c.o:
-	$(CCC) $(INCLUDE) $(C(CCFLAGS)) $(EXTRAC(CCFLAGS))  -c $(SRC) $< -o $@
-all: ${ALL}
+clean:
+	@echo " Cleaning...";
+	@echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET)
 
-test_event: test_event.o Events.o 
-	${CC} ${(CCFLAGS)} ${LFLAGS} test_event.o Events.o
-test_csv: test_csv_reader.o  
-	${CC} ${(CCFLAGS)} ${LFLAGS} test_csv_reader.o -o test_csv.sh
-test_system: test_system.o all
-	${CC} ${(CCFLAGS)} ${LFLAGS} test_system.o Events.o Cow.o Herd.o Farm.o Simple_One_Herd_Farm.o System.o BVD_Random_Number_Generator.o Output.o Utilities.o
-
-test_cow: test_cow.o Cow.o System.o Events.o BVD_Random_Number_Generator.o Farm.o Herd.o Simple_One_Herd_Farm.o Output.o
-	${CC} ${(CCFLAGS)} ${LFLAGS} test_cow.o  System.o Cow.o Events.o Farm.o Herd.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o Output.o
-
-test_initializer: test_initializer.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o
-	${CC} ${(CCFLAGS)} ${LFLAGS} test_initializer.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o Output.o
-test_output: test_output.o Output.o
-	${CC} ${(CCFLAGS)} ${LFLAGS} test_output.o Output.o
-
-test: all  test_herd.o
-	${CC} ${(CCFLAGS)} ${LFLAGS} test_herd.o Events.o Cow.o BVD_Random_Number_Generator.o Herd.o
-
-example: Utilities.o  example.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o Output.o Slaughterhouse.o Market.o SlaughterHouseManager.o SimpleFarmManager.o FarmManager.o
-	${CC} ${LD_INCLUDE} ${(CCFLAGS)} ${LFLAGS} example.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o Output.o Slaughterhouse.o Market.o SlaughterHouseManager.o SimpleFarmManager.o FarmManager.o Utilities.o -o bvd_example_program 
-
-programm: ${ALL}	
-	${CC} ${LD_INCLUDE} ${(CCFLAGS)} ${LFLAGS} $(ALL)  -o bvd_agent_simulation
-INIReader.o:
-	$(CC) $(CCFLAGS) -c projectImports/inih/cpp/INIReader.cpp 
-	#cd projectImports/inih/extra/
-	#make
-	#$(CC) $(CCFLAGS) -c projectImports/inih/ini.c projectImports/inih/cpp/INIReader.cpp 
-
-ini.o:
-	$(CCC) $(CFLAGS) -c projectImports/inih/ini.c
-clean: 
-	rm -f *.o core a.out 
+.PHONY: clean
+#
+# ALL = FileHandler.o HDF5Handler.o SQLiteHandler.o ini.o INIReader.o TradeFilter.o Utilities.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o SmallFarmManager.o Small_One_Herd_Farm.o Simple_One_Herd_Farm.o Output.o  Slaughterhouse.o Market.o SlaughterHouseManager.o SimpleFarmManager.o FarmManager.o CommandlineOptions.o BVDOptions.o AdvancedOutput.o CowWellFarmManager.o CowWellFarm.o  programm.o
+#
+# .SUFFIXES: .cpp
+# .cpp.o:
+# 	${CC} -c ${CCFLAGS} ${INCLUDE} $<
+# .c.o:
+# 	$(CCC) $(INCLUDE) $(C(CCFLAGS)) $(EXTRAC(CCFLAGS))  -c $(SRC) $< -o $@
+# all: ${ALL}
+#
+# test_event: test_event.o Events.o
+# 	${CC} ${(CCFLAGS)} ${LFLAGS} test_event.o Events.o
+# test_csv: test_csv_reader.o
+# 	${CC} ${(CCFLAGS)} ${LFLAGS} test_csv_reader.o -o test_csv.sh
+# test_system: test_system.o all
+# 	${CC} ${(CCFLAGS)} ${LFLAGS} test_system.o Events.o Cow.o Herd.o Farm.o Simple_One_Herd_Farm.o System.o BVD_Random_Number_Generator.o Output.o Utilities.o
+#
+# test_cow: test_cow.o Cow.o System.o Events.o BVD_Random_Number_Generator.o Farm.o Herd.o Simple_One_Herd_Farm.o Output.o
+# 	${CC} ${(CCFLAGS)} ${LFLAGS} test_cow.o  System.o Cow.o Events.o Farm.o Herd.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o Output.o
+#
+# test_initializer: test_initializer.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o
+# 	${CC} ${(CCFLAGS)} ${LFLAGS} test_initializer.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o Output.o
+# test_output: test_output.o Output.o
+# 	${CC} ${(CCFLAGS)} ${LFLAGS} test_output.o Output.o
+#
+# test: all  test_herd.o
+# 	${CC} ${(CCFLAGS)} ${LFLAGS} test_herd.o Events.o Cow.o BVD_Random_Number_Generator.o Herd.o
+#
+# example: Utilities.o  example.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o Output.o Slaughterhouse.o Market.o SlaughterHouseManager.o SimpleFarmManager.o FarmManager.o
+# 	${CC} ${LD_INCLUDE} ${(CCFLAGS)} ${LFLAGS} example.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o Simple_One_Herd_Farm.o Output.o Slaughterhouse.o Market.o SlaughterHouseManager.o SimpleFarmManager.o FarmManager.o Utilities.o -o bvd_example_program
+#
+# programm: ${ALL}
+# 	${CC} ${LD_INCLUDE} ${(CCFLAGS)} ${LFLAGS} $(ALL)  -o bvd_agent_simulation
+# INIReader.o:
+# 	$(CC) $(CCFLAGS) -c projectImports/inih/cpp/INIReader.cpp
+# 	#cd projectImports/inih/extra/
+# 	#make
+# 	#$(CC) $(CCFLAGS) -c projectImports/inih/ini.c projectImports/inih/cpp/INIReader.cpp
+#
+# ini.o:
+# 	$(CCC) $(CFLAGS) -c projectImports/inih/ini.c
+# clean:
+# 	rm -f *.o core a.out

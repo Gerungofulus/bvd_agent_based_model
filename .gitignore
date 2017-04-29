@@ -6,3 +6,6 @@ ADEVS_Style/*
 *.sh
 bvd_agent_simulation
 *dSYM
+build/*
+lib/*
+*.DS_STORE
