@@ -28,7 +28,7 @@ $(TARGET): $(OBJECTS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(BUILDDIR)
-	@echo " $(CC) $(CFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CFLAGS) $(INC) -c -o $@ $<
+	@echo " $(CC) $(CCFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CCFLAGS) $(INC) -c -o $@ $<
 
 clean:
 	@echo " Cleaning...";
