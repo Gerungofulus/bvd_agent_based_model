@@ -12,29 +12,41 @@ endif
 SRCDIR := src
 BUILDDIR := build
 TARGET := build/bvd_agent_simulation
+CUSTOMLIBSPATH := lib
 SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 INC = -I/usr/include -I/usr/include/hdf5/serial -I/usr/local/include -I. -I./projectImports/inih/ -I include
-LD_INCLUDE= -L/usr/lib/x86_64-linux-gnu/serial -L/usr/lib -L/usr/lib/x86_64-linux-gnu/
+LD_INCLUDE= -L/usr/lib/x86_64-linux-gnu/serial -L/usr/lib -L/usr/lib/x86_64-linux-gnu/ -L $(CUSTOMLIBSPATH)
 #LD_INCLUDE= -L.
 #
 # #next two lines go for ini reader lib
-SRC = projectImports/inih/ini.c
-OBJ = $(SRC:.c=.o)
-$(TARGET): $(OBJECTS)
+# SRC = projectImports/inih/ini.c
+# OBJ = $(SRC:.c=.o)
+INIOBJECTS := $(CUSTOMLIBSPATH)/ini.o $(CUSTOMLIBSPATH)/INIReader.o
+
+CUSTOMLIBS := $(INIOBJECTS)
+
+$(TARGET): $(OBJECTS) $(CUSTOMLIBS)
 	@echo " Linking..."
-	@echo " $(CC) $^ -o $(TARGET) $(LFLAGS)"; $(CC) $^ -o $(TARGET) $(LFLAGS)
+	@echo " $(CC) $^ -o $(TARGET) $(LFLAGS) $(LD_INCLUDE)"; $(CC) $^ -o $(TARGET) $(LFLAGS) $(LD_INCLUDE)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.$(SRCEXT)
 	@mkdir -p $(BUILDDIR)
+	@mkdir -p $(CUSTOMLIBSPATH)
 	@echo " $(CC) $(CCFLAGS) $(INC) -c -o $@ $<"; $(CC) $(CCFLAGS) $(INC) -c -o $@ $<
 
 clean:
 	@echo " Cleaning...";
-	@echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET)
+	@echo " $(RM) -r $(BUILDDIR) $(TARGET)"; $(RM) -r $(BUILDDIR) $(TARGET) $(CUSTOMLIBSPATH)
 
 .PHONY: clean
+
+$(CUSTOMLIBSPATH)/INIReader.o:
+	$(CC) $(CCFLAGS) -c projectImports/inih/cpp/INIReader.cpp -o $(CUSTOMLIBSPATH)/INIReader.o
+$(CUSTOMLIBSPATH)/ini.o:
+	$(CCC) $(CFLAGS) -c projectImports/inih/ini.c -o $(CUSTOMLIBSPATH)/ini.o
+
 #
 # ALL = FileHandler.o HDF5Handler.o SQLiteHandler.o ini.o INIReader.o TradeFilter.o Utilities.o Initializer.o Cow.o Events.o Farm.o Herd.o System.o BVD_Random_Number_Generator.o SmallFarmManager.o Small_One_Herd_Farm.o Simple_One_Herd_Farm.o Output.o  Slaughterhouse.o Market.o SlaughterHouseManager.o SimpleFarmManager.o FarmManager.o CommandlineOptions.o BVDOptions.o AdvancedOutput.o CowWellFarmManager.o CowWellFarm.o  programm.o
 #
