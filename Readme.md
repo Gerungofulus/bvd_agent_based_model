@@ -14,17 +14,18 @@ A roadmap following the needs of FLI and TU Berlin has been proposed.
 Several tasks have already been defined for the development of the code.
 
 * Simulation Capability
-** At the moment (Beginning of April 2017) the behavior of the market is determined by some very simple rules, leading to some kind of worst case scenario. In order to come up with more realistic results, a better market model based on loyalties between premises will be implemented.
-** The biggest amount of time is used by the market for the process of choosing cattle to put them into the offer and demands driven market and doing the matchmaking. Making this part of the simulation thread safe and doing it in N threads should increase the performance of the code significantly.
+  * At the moment (Beginning of April 2017) the behavior of the market is determined by some very simple rules, leading to some kind of worst case scenario. In order to come up with more realistic results, a better market model based on loyalties between premises will be implemented.
+  * The biggest amount of time is used by the market for the process of choosing cattle to put them into the offer and demands driven market and doing the matchmaking. Making this part of the simulation thread safe and doing it in N threads should increase the performance of the code significantly.
 * Output
-** Fixing of the SQLite output 
-** Including support for CSV file output
-** Supporting turning on and off different output data (to minimize data size)
+  * Fixing of the SQLite output 
+  * Including support for CSV file output
+  * Supporting turning on and off different output data (to minimize data size)
 * Tests
-** Since the code's size has grown in the course of writing multiple theses, the code needs to be tested properly
+  * Since the code's size has grown in the course of writing multiple theses, the code needs to be tested properly
 * usability 
-** The code was not build with users in mind who are not as experienced with C++ or unix administration. One of the goals would be to include autogen in order to generate proper make files to ease up the building process. 
-
+  * The code was not build with users in mind who are not as experienced with C++ or unix administration. One of the goals would be to include autogen in order to generate proper make files to ease up the building process. 
+  * Description of all ini parameters
+  * Put Source into a `src` folder and split it up into different subdirectories.
 ## Contribute
 You can easily contribute to this project by forking it and starting pull requests. If you are interested in the corresponding research, feel to reach out to one of the main developers of this package.
 
