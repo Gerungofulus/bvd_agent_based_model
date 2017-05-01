@@ -2,8 +2,7 @@
 #include <iostream>
 #include "projectImports/inih/cpp/INIReader.h"
 #include "Utilities.h"
-bool FarmManager::applyQuarantineOnBuying = false;
-bool FarmManager::respectQuarantine = true;
+#include "BVDContainmentStrategy.h"
 FarmManager::FarmManager(Farm* farm,System *s):myFarm(farm), system(s){
 	this->buyingMargin = System::reader->GetInteger("farmmanager" , "threshold_buy", 5);
 	this->sellingMargin = System::reader->GetInteger("farmmanager" , "threshold_sell", 20);
@@ -76,8 +75,8 @@ FarmManager::FarmManager(Farm* farm,System *s):myFarm(farm), system(s){
 			}
 			sellingPriorityList->insert(sellingPriorityList->end(), list);
 	}
-	FarmManager::applyQuarantineOnBuying = System::reader->GetBoolean("containment", "applyQuarantineOnBuying", false);
-	FarmManager::respectQuarantine = System::reader->GetBoolean("containment", "respectQuarantine", true);
+
+
 	registeredCowsToSell = new Cow::UnorderedSet();
 }
 
@@ -95,7 +94,7 @@ void FarmManager::manage(){
 	this->resetGroupsOfAllCowsOfAllHerds();
 
 
-	if( FarmManager::respectQuarantine && FarmManager::applyQuarantineOnBuying) return;
+	if( System::getInstance(nullptr)->activeStrategy->respectQuarantine && System::getInstance(nullptr)->activeStrategy->applyQuarantineOnBuying) return;
 	std::set<Demand*>* requests = new std::set<Demand*>();
 
 	this->calculateDemand(requests);
@@ -373,5 +372,5 @@ void FarmManager::registerCowForSale(const Cow* cow){
 }
 
 inline bool FarmManager::isUnderQuarantine(){
-	return this->myFarm->isUnderQuarantine() && FarmManager::respectQuarantine;
+	return this->myFarm->isUnderQuarantine() && System::getInstance(nullptr)->activeStrategy->respectQuarantine;
 }

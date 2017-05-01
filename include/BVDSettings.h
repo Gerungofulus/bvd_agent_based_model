@@ -1,19 +1,43 @@
 
 #ifndef __bvdsettings_h_
 #define __bvdsettings_h_
+#include <string>
+#include <iostream>
+#include <vector>
+#include <sstream>
+#include <iterator>
+#include "BVDContainmentStrategy.h"
 class INIReader;
+struct BVDContainmentStrategy;
+
+
 
 class BVDSettings{
-    static const BVDSettings* sharedInstance(const INIReader& reader);
-
+public:
+    static BVDSettings* sharedInstance(INIReader* reader);
+    StrategyQueue strategies;
 
 private:
-    const INIReader* reader;
-    BVDSettings(const INIReader& reader);
+    INIReader* reader;
+    BVDSettings(INIReader* reader);
     ~BVDSettings();
     BVDSettings(const BVDSettings&);
 
     static BVDSettings* _instance;
+
+
+
+    double bloodTestAccuracy;
+    double retestTimeMax;
+    double vaccinationWorkingProb;
+
+
+    //strategies
+
+
+    void initializeStrategies();
+    void initializeStrategy(const std::string& name);
+
 
     class CGuard
 	{
@@ -21,9 +45,6 @@ private:
 	   ~CGuard();
 
 	};
-
-    double bloodTestAccuracy;
-    double retestTimeMax;
-    double vaccinationWorkingProb;
 };
+
 #endif

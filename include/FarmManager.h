@@ -20,7 +20,7 @@ enum FarmManagerSellChoosingStrategy{
 class FarmManager{
 	public:
 		FarmManager(Farm* farm,System *s);
-		
+
 
 		~FarmManager();
 		void manage();
@@ -32,12 +32,12 @@ class FarmManager{
 		virtual void calculateDemand(std::set<Demand*>* requests)=0;//requests which are created in this function will be deleted in the Market
 		void postDemand(std::set<Demand*>* requests);
 		virtual int calculateNumberOfAnimalsPerGroup(Cow_Trade_Criteria crit, int overallNumber,int groupNum = 1, Cow::UnorderedSet* cows=NULL)=0; //calculate the number of animals taht should be sold
-		virtual void chooseCowsToOfferFromGroupAndAddToSellingGroup(int numberOfCowsToSell, Cow_Trade_Criteria crit, Cow::UnorderedSet* cows)=0; 
+		virtual void chooseCowsToOfferFromGroupAndAddToSellingGroup(int numberOfCowsToSell, Cow_Trade_Criteria crit, Cow::UnorderedSet* cows)=0;
 		void postOffer(Cow::UnorderedSet* cowsToSell);
 		void resetGroupsOfAllCowsOfAllHerds();
 		void chooseCowsToOffer(Cow::UnorderedSet* cowsToSell);
-		
-		
+
+
 	protected:
 		Farm* myFarm;
 		System* system;
@@ -50,12 +50,11 @@ class FarmManager{
 		void standardCalculateDemand(std::set<Demand*>* requests);
 		int standardCalculateOverallNumberToSell();
 		int standardCalculateOverallNumberToBuy(bool replace=true);
-		int standardCalculateNumberOfAnimalsPerGroup(Cow_Trade_Criteria crit,int overallNumber, int groupNum = 1, Cow::UnorderedSet* cows =NULL);		
+		int standardCalculateNumberOfAnimalsPerGroup(Cow_Trade_Criteria crit,int overallNumber, int groupNum = 1, Cow::UnorderedSet* cows =NULL);
 		void standardOfferingMethod(int numberOfCowsToSell, Cow_Trade_Criteria crit, Cow::UnorderedSet* cows);
 		bool isUnderQuarantine();
 		static FarmManagerSellChoosingStrategy iniInputToSellingStrategy(std::string& input);
-		static bool applyQuarantineOnBuying;
-		static bool respectQuarantine;
+		
 		Cow::UnorderedSet *registeredCowsToSell;
 };
 #endif

@@ -1,30 +1,35 @@
 #ifndef __system_h_
 #define __system_h_
-#include "Events.h"
+
 #include <iostream>
 #include <unordered_set>
 #include <vector>
+#include <iomanip>
+#include <signal.h>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <sstream>
 #include "BVD_Random_Number_Generator.h"
 
 
 class AdvancedOutput;
 class Farm;	   //Forward declaration. Real declaration in Farm.h
-class Market;      //Forward declaration. Real declaration in Market.h 
+class Market;      //Forward declaration. Real declaration in Market.h
 class INIReader;
 class Cow;
-struct ContainmentStrategies{
-	bool eartag;
-	bool vaccination;	
-	bool jungtierfenster;
-};
+
+class Event;
+struct BVDContainmentStrategy;
+class BVDSettings;
 
 class System
 {
  public:
   //static System* getInstance();
-  static System* getInstance(INIReader* reader);//(double start_time , std::string output_filename="test.h5" , bool overwrite=true , double dt_log = 1 , double dt_write=10, double dt_manage = bvd_const::tradingTimeIntervall.MONTHLY ); 
-  
-  
+  static System* getInstance(INIReader* reader);//(double start_time , std::string output_filename="test.h5" , bool overwrite=true , double dt_log = 1 , double dt_write=10, double dt_manage = bvd_const::tradingTimeIntervall.MONTHLY );
+
+
   void schedule_event( Event* );//Done
 
   void execute_next_event();//Done
@@ -47,22 +52,22 @@ class System
 
   void set_log_interval( double dt_log );
   void set_write_interval( double dt_write );
-  
+
 
   void log_state();
-  
-  AdvancedOutput *output;
 
-  Random_Number_Generator rng;
+  	AdvancedOutput *output;
+	BVDContainmentStrategy* activeStrategy;
+  	Random_Number_Generator rng;
 	double getCurrentTime();
 	Market* getMarket();
 	static INIReader* reader;
 	double _dt_manage;
 	void scheduleFutureCowIntros();
-	ContainmentStrategies strategies;
+
 	void addCow(Cow* c);
  private:
- 	
+
  	void scheduleContainmentEvents();
  	void scheduleEartagEvents();
  	void scheduleVaccinationEvents();
@@ -76,21 +81,23 @@ class System
 	void _execute_event(Event* e );
 	double _dt_log;
 	double _dt_write;
-	
+
 	bool stop;
 	unsigned int no_of_events_processed;
 	static void handleSystemError(int sig);
 	static System* _instance;
 
 	System(double start_time , double dt_log = 1 , double dt_write=10, double dt_manage = bvd_const::tradingTimeIntervall.MONTHLY );//Done
+
+    BVDSettings* mySettings;
 	~System();
-	
+
 	class CGuard
 	{
 	public:
 	   ~CGuard();
-	   
+
 	};
-  
+
 };
 #endif
