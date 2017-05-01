@@ -2,7 +2,7 @@
 #autoconfig
 
 Makefile
-
+config.status
 
 #Data files
 *.csv
