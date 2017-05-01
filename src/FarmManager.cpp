@@ -239,7 +239,10 @@ int FarmManager::standardCalculateOverallNumberToSell(){
 	int numberOfCowsToSell = 0;
 	int difference = 0;
 	int numberOfAnimalsWithType = 0;
-
+	double tmp = this->replacementPercentage;
+	if(this->myFarm->isUnderQuarantine()){
+		this->replacementPercentage = 0.0;
+	}
 	std::vector<Herd*>* herds = this->myFarm->getHerds();
 
 	for (int i=0; i < herds->size(); i++){
@@ -249,6 +252,9 @@ int FarmManager::standardCalculateOverallNumberToSell(){
 			numberOfCowsToSell -= difference;
 		else
 			numberOfCowsToSell += difference;
+	}
+	if(this->myFarm->isUnderQuarantine()){
+		this->replacementPercentage = tmp;
 	}
 	return numberOfCowsToSell;
 }
