@@ -413,6 +413,7 @@ void System::_execute_event( Event* e )
 			delete this->activeStrategy;
 			this->activeStrategy = this->mySettings->strategies.top();
 			this->mySettings->strategies.pop();
+			schedule_event( new System_Event( this->mySettings->strategies.top()->startTime, Event_Type::ChangeContainmentStrategy));
 		}
 		break;
     case Event_Type::STOP:
