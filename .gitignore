@@ -1,12 +1,26 @@
-*.o
+
+#autoconfig
+
+Makefile
+
+
+#Data files
+*.csv
 *.h5
-Statistiken_Cattle/
-ADEVS_Style/*
-*.sh
-bvd_agent_simulation
-*dSYM
-build/*
-lib/*
-*.DS_STORE
 Plots_Testfarm/
 Rinder-Statistiken/
+Statistiken_Cattle/
+
+
+
+#build
+build/*
+lib/*
+*.o
+bvd_agent_simulation
+*dSYM
+
+
+
+#OS specific
+*.DS_STORE
