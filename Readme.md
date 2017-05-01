@@ -42,17 +42,22 @@ A roadmap following the needs of FLI and TU Berlin has been proposed.
 Several tasks have already been defined for the development of the code.
 
 * Simulation Capability
-  * At the moment (Beginning of April 2017) the behavior of the market is determined by some very simple rules, leading to some kind of worst case scenario. In order to come up with more realistic results, a better market model based on loyalties between premises will be implemented.
-  * The biggest amount of time is used by the market for the process of choosing cattle to put them into the offer and demands driven market and doing the matchmaking. Making this part of the simulation thread safe and doing it in N threads should increase the performance of the code significantly.
+	  * At the moment (Beginning of April 2017) the behavior of the market is determined by some very simple rules, leading to some kind of worst case scenario. In order to come up with more realistic results, a better market model based on loyalties between premises will be implemented.
+	  * The biggest amount of time is used by the market for the process of choosing cattle to put them into the offer and demands driven market and doing the matchmaking. Making this part of the simulation thread safe and doing it in N threads should increase the performance of the code significantly.
 * Output
-  * Fixing of the SQLite output 
-  * Including support for CSV file output
-  * Supporting turning on and off different output data (to minimize data size)
+	  * Fixing of the SQLite output 
+	  * Including support for CSV file output
+	  * Supporting turning on and off different output data (to minimize data size)
 * Tests
-  * Since the code's size has grown in the course of writing multiple theses, the code needs to be tested properly
+	  * Since the code's size has grown in the course of writing multiple theses, the code needs to be tested properly
 * usability 
-  * Make it possible to generate makefiles which exclude certain files if for example HDF5 support is not needed.
-  * Description of all ini parameters
+	  * Make it possible to generate makefiles which exclude certain files if for example HDF5 support is not needed.
+	  * Description of all ini parameters
+* misc
+	* make project follow conventions 
+		* include system libraries in header files and project files in cpp files
+		* clean up system
+		* move all options to BVDSettings
   
 ## Contribute
 You can easily contribute to this project by forking it and starting pull requests. If you are interested in the corresponding research, feel to reach out to one of the main developers of this package. Note that we're trying to stick to the infimous [git flow](https://danielkummer.github.io/git-flow-cheatsheet/). 
