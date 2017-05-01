@@ -1,7 +1,6 @@
 *.o
 *.h5
-./Rinder-Statistiken/*
-Statistiken_Cattle/*
+Statistiken_Cattle/
 ADEVS_Style/*
 *.sh
 bvd_agent_simulation
@@ -9,3 +8,5 @@ bvd_agent_simulation
 build/*
 lib/*
 *.DS_STORE
+Plots_Testfarm/
+Rinder-Statistiken/
