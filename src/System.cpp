@@ -1,21 +1,16 @@
-#include <iostream>
-#include <iomanip>
+
 #include "System.h"
 #include "Events.h"
 #include "Farm.h"
 #include "Cow.h"
 #include "Herd.h"
 #include "AdvancedOutput.h"
-//#include "Output.h"
-#include <signal.h>
 #include "Utilities.h"
-#include <string>
-#include <vector>
-#include <algorithm>
 #include "Market.h"
 #include "projectImports/inih/cpp/INIReader.h"
-#include <sstream>
-
+#include "Events.h"
+#include "BVDContainmentStrategy.h"
+#include "BVDSettings.h"
 System* System::_instance = 0;
 INIReader* System::reader = 0;
 System* System::getInstance(INIReader* reader){
@@ -23,7 +18,7 @@ System* System::getInstance(INIReader* reader){
 	if (!_instance){
 		System::reader = reader;
 		double t_start = reader->GetReal("simulation", "t_start", 0.0);
-		
+
 		double dt_log  = reader->GetReal("simulation", "dt_log", 1.0);
 		double dt_output = reader->GetReal("simulation", "dt_output", 100.0);
 		std::string dtmanage = reader->Get("trade" , "tradeRegularity", "DAILY");
@@ -43,13 +38,13 @@ System* System::getInstance(INIReader* reader){
 		}else if(dtmanage.compare("YEARLY") == 0){
 			dt_manage = bvd_const::tradingTimeIntervall.YEARLY;
 		}
-		Cow::quarantineAfterPositiveTest = reader->GetBoolean("containment", "quarantineAfterPositiveTest", true);
+
 
 	   	_instance = new System( t_start ,  dt_log ,  dt_output,  dt_manage);
 	   	//Step 4: Set custom log and write intervals (if desired) and start the simulation
 		_instance->set_log_interval(dt_log);
 		_instance->set_write_interval(dt_output);
-		_instance->scheduleContainmentEvents();
+		_instance->mySettings = BVDSettings::sharedInstance(reader);
 		Cow::set_system(_instance);
 	}
    return _instance;
@@ -68,11 +63,9 @@ System::System(double start_time , double dt_log , double dt_write, double dt_ma
 	}else{
 		rng = Random_Number_Generator(  );
 	}
-	strategies.eartag = false;
-	strategies.vaccination = false;
-	strategies.jungtierfenster = false;
+
 	set_log_interval(dt_log);
-	set_write_interval( dt_write); 
+	set_write_interval( dt_write);
 	//output       = new Output( output_filename , overwrite );
 	output = new AdvancedOutput(*System::reader);
 	no_of_events_processed =0;
@@ -80,12 +73,13 @@ System::System(double start_time , double dt_log , double dt_write, double dt_ma
   	#ifdef _DEBUG_
   		signal(SIGSEGV, handleSystemError);
   	#endif
+	this->activeStrategy = new BVDContainmentStrategy(BVDContainmentStrategyFactory::defaultStrategy);
 }
 
 System::~System()
 {
-	
-  delete output;	
+
+  delete output;
   std::cout << "Instance of system is going to be deleted. Stats: " << no_of_events_processed ;
   std::cout << " events processed, " << Cow::total_number();
   std::cout << " cows went through the system." << std::endl;
@@ -93,8 +87,8 @@ System::~System()
   delete market;
   for(auto farm: this->farms)
   	delete farm;
-  	
-  	
+	delete this->activeStrategy;
+
 //  delete output;
 }
 double System::current_time(){ return _current_time; }
@@ -105,9 +99,9 @@ void System::schedule_event( Event* e )
   // (1) put the event into the main queue
   queue.push( e );
   // (2) find the farm that this event pertains to and register the event there if it is an infection rate changing event.
-	if( this->queue.top()->type == Event_Type::INFECTION && e->id == this->queue.top()->id){ //the event just being processed is from 
+	if( this->queue.top()->type == Event_Type::INFECTION && e->id == this->queue.top()->id){ //the event just being processed is from
 		this->output->logResultingEventOfInfection(e);
-		
+
 	}
   if ( e->is_trade_event() )
     {
@@ -133,8 +127,8 @@ void System::schedule_event( Event* e )
 	  c->register_future_infection_rate_changing_event( e );
 	}
     }
-    
- 
+
+
 }
 void System::scheduleFutureCowIntros(){
 	int num = System::reader->GetInteger("modelparam","inputCowNum", 0);
@@ -146,7 +140,7 @@ void System::scheduleFutureCowIntros(){
   	std::vector<Farm*>::iterator it;
   	int farmID;
   	double intTime;
-  	
+
   	std::cout << "scheduling intros of " << num << " cows"<< std::endl;
 	for(int a=0;a < num;++a){
 		f = NULL;
@@ -165,9 +159,9 @@ void System::scheduleFutureCowIntros(){
 			f = *it;
 			if(f->id +1 == farmID){//zero based hier, 1 based in der menschenwelt
 
-				break;	
+				break;
 			}
-			
+
 		}
 		if(it != this->farms.end()){
 			std::cout << "cow " << no << " is introduced to the system in farm " << farmID << " at time t=" << intTime << std::endl;
@@ -177,7 +171,7 @@ void System::scheduleFutureCowIntros(){
 
 			this->schedule_event(e);
 
-			
+
 		}else{
 			delete c;
 		}
@@ -197,16 +191,16 @@ void System::execute_next_event()
       std::cout << "No more events in queue!" << std::endl << std::endl;
       return;
     }
-  
+
   no_of_events_processed++;
-  
+
   Event* e = queue.top();
 
   queue.pop();
   if (e->execution_time < _current_time){
     std::cerr << "Error, got an event that is earlier than the current time. Exiting" << std::endl;
   	Utilities::pretty_print(e, std::cout);
-  	
+
   }
 //  Cow* c = Cow::get_address( e->id );
 //  Farm *f = NULL;
@@ -220,14 +214,14 @@ void System::execute_next_event()
 	  Cow* c = Cow::get_address( e->id );
       _current_time = e->execution_time;
      if(e->is_trade_event())
-		this->output->logEvent(e); 
+		this->output->logEvent(e);
       switch ( e->dest )
 	{
 	case Destination_Type::COW:
 	  {
-	    
-	    if ( c != NULL  && c->id() == e->id){ 
-		    c->execute_event( e ); 
+
+	    if ( c != NULL  && c->id() == e->id){
+		    c->execute_event( e );
   		} //Event is not pertaining to a dead cow. Could  this happen?
 	    break;
 	  }
@@ -246,19 +240,19 @@ void System::execute_next_event()
 		delete c;
     }
 //   if(f != NULL &&e->is_infection_rate_changing_event())
-//    	f->delete_infection_rate_change_event(e); 
+//    	f->delete_infection_rate_change_event(e);
 	if(e->is_infection_rate_changing_event())
 		memorySaveQ.push(e);
 	else
 		delete e;
-	
+
 
 	Event* event;
 	while(memorySaveQ.size() > 0 && ( (event = memorySaveQ.top()) != nullptr) &&(event->execution_time + 500. < this->_current_time )){
 		delete event;
 		memorySaveQ.pop();
 	}
-	
+
 }
 
 void System::invalidate_event( Event* e )
@@ -279,15 +273,15 @@ void System::register_farm( Farm* f )
   else if(f->getType() == SLAUGHTERHOUSE)
   	this->market->registerSlaughterHouse((Slaughterhouse*) f);
   //output->set_number_of_farms( farms.size() );
-  	
+
 }
 void System::unregister_farm( Farm* f )
 {
   std::vector<Farm*>::iterator got_it = std::find( farms.begin() , farms.end() , f );
   if ( got_it != farms.end()){
-    
+
     farms.erase( got_it );
-    
+
     }
   //output->set_number_of_farms( farms.size() );
 }
@@ -344,7 +338,7 @@ void System::log_state()
 //      std::array< int , 4 >* temp = new std::array< int , 4 >();
 //      f->		( temp );
 //      state->push_back( temp );
-//      
+//
 //    }
 //  output->log_datapoint( _current_time , state );
 //  for ( auto t : *state )
@@ -354,11 +348,13 @@ void System::log_state()
 
 void System::run_until( double end_time )
 {
-  
+
   schedule_event( new System_Event( end_time ,                  Event_Type::STOP ) );
   schedule_event( new System_Event( _current_time + _dt_log   , Event_Type::LOG_OUTPUT   ) );
   schedule_event( new System_Event( _current_time + _dt_write , Event_Type::WRITE_OUTPUT ) );
   schedule_event( new System_Event( _current_time + _dt_manage , Event_Type::MANAGE ) );
+  if(this->mySettings->strategies.size() > 0)
+	schedule_event( new System_Event( this->mySettings->strategies.top()->startTime, Event_Type::ChangeContainmentStrategy));
   stop=false;
   while( !(stop || queue.empty())  )
     execute_next_event();
@@ -383,33 +379,41 @@ Market* System::getMarket(){
 }
 void System::_execute_event( Event* e )
 {
-	static double jungtierzeit = System::reader->GetReal("containment", "jungtierzeit", 186.);
+
   switch( e->type )
     {
-	case Event_Type::EARTAG:
-		std::cout << "set eartag" << std::endl;
-		strategies.eartag = !strategies.eartag;
-		break;
-	case Event_Type::VACCINATION:
-		std::cout << "set vaccination" << std::endl;
-		strategies.vaccination = !strategies.vaccination;
-		break;
-	case Event_Type::JUNGTIER:
-		std::cout << "set jungtier" << std::endl;
-		strategies.jungtierfenster = !strategies.jungtierfenster;
-		if(strategies.jungtierfenster){
-			
-			schedule_event(new System_Event(e->execution_time + jungtierzeit,Event_Type::JUNGTIER_EXEC));
-		}
-		break;
+	// case Event_Type::EARTAG:
+	// 	std::cout << "set eartag" << std::endl;
+	// 	strategies.eartag = !strategies.eartag;
+	// 	break;
+	// case Event_Type::VACCINATION:
+	// 	std::cout << "set vaccination" << std::endl;
+	// 	strategies.vaccination = !strategies.vaccination;
+	// 	break;
+	// case Event_Type::JUNGTIER:
+	// 	std::cout << "set jungtier" << std::endl;
+	// 	strategies.jungtierfenster = !strategies.jungtierfenster;
+	// 	if(strategies.jungtierfenster){
+	//
+	// 		schedule_event(new System_Event(e->execution_time + jungtierzeit,Event_Type::JUNGTIER_EXEC));
+	// 	}
+	// 	break;
 	case Event_Type::JUNGTIER_EXEC:
 		for (auto farm : farms){
-	    	
+
 	    	farm->jungtierCheck();
-	    	
+
     	}
-		if(strategies.jungtierfenster){
-			schedule_event(new System_Event(e->execution_time + jungtierzeit,Event_Type::JUNGTIER_EXEC));
+		if(this->activeStrategy->usesJungtierFenster){
+			schedule_event(new System_Event(e->execution_time + this->activeStrategy->jungtierzeit,Event_Type::JUNGTIER_EXEC));
+		}
+		break;
+	case Event_Type::ChangeContainmentStrategy:
+		if(this->mySettings->strategies.size() > 0){
+			delete this->activeStrategy;
+			this->activeStrategy = this->mySettings->strategies.top();
+			this->mySettings->strategies.pop();
+			schedule_event( new System_Event( this->mySettings->strategies.top()->startTime, Event_Type::ChangeContainmentStrategy));
 		}
 		break;
     case Event_Type::STOP:
@@ -417,7 +421,7 @@ void System::_execute_event( Event* e )
       	stop = true;
       	break;
     case Event_Type::LOG_OUTPUT:
-      
+
       log_state();
       schedule_event(new System_Event( _current_time + _dt_log , Event_Type::LOG_OUTPUT ) );
       break;
@@ -430,9 +434,9 @@ void System::_execute_event( Event* e )
 			break;
     case Event_Type::MANAGE:
     	for (auto farm : farms){
-	    	
+
 	    	farm->getManaged();
-	    	
+
     	}
     	this->market->flushQueues();
     	#ifdef _SYSTEM_DEBUG_
@@ -446,7 +450,7 @@ void System::_execute_event( Event* e )
     default:
       break;
     }
-  
+
 }
 void System::handleSystemError(int sig){
 	std::cerr << "received an error at time " << System::_instance->_current_time << std::endl;
@@ -461,53 +465,8 @@ System::CGuard::~CGuard(){
 	}
 }
 
-void System::scheduleContainmentEvents(){
-	this->scheduleEartagEvents();
-	this->scheduleVaccinationEvents();
-	this->scheduleJungtierfensterEvents();
-}
-void System::scheduleEartagEvents(){
-	double startTime, endTime;
-	startTime = System::reader->GetReal("containment", "eartagStart", -1.0);
-	endTime = System::reader->GetReal("containment", "eartagEnd", -1.0);
-	Event* e;
-	if(this->_current_time <= startTime){
-		e = new System_Event(startTime , Event_Type::EARTAG);
-		this->schedule_event(e);
-	}
-	if(this->_current_time <= endTime){
-		e = new System_Event(endTime , Event_Type::EARTAG);
-		this->schedule_event(e);
-	}
-}
-void System::scheduleVaccinationEvents(){
-	double startTime, endTime;
-	startTime = System::reader->GetReal("containment", "vaccinationStart", -1.0);
-	endTime = System::reader->GetReal("containment", "vaccinationEnd", -1.0);
-	Event* e;
-	if(this->_current_time <= startTime){
-		e = new System_Event(startTime , Event_Type::VACCINATION);
-		this->schedule_event(e);
-	}
-	if(this->_current_time <= endTime){
-		e = new System_Event(endTime , Event_Type::VACCINATION );
-		this->schedule_event(e);
-	}
-}
-void System::scheduleJungtierfensterEvents(){
-	double startTime, endTime;
-	startTime = System::reader->GetReal("containment", "jungtierfensterStart", -1.0);
-	endTime = System::reader->GetReal("containment", "jungtierfensterEnd", -1.0);
-	Event* e;
-	if(this->_current_time <= startTime){
-		e = new System_Event(startTime , Event_Type::JUNGTIER);
-		this->schedule_event(e);
-	}
-	if(this->_current_time <= endTime){
-		e = new System_Event(endTime , Event_Type::JUNGTIER );
-		this->schedule_event(e);
-	}
-}
+
+
 void System::addCow(Cow* c){
 	this->output->logBirth(c);
 }

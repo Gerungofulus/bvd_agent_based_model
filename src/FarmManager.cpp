@@ -2,8 +2,7 @@
 #include <iostream>
 #include "projectImports/inih/cpp/INIReader.h"
 #include "Utilities.h"
-bool FarmManager::applyQuarantineOnBuying = false;
-bool FarmManager::respectQuarantine = true;
+#include "BVDContainmentStrategy.h"
 FarmManager::FarmManager(Farm* farm,System *s):myFarm(farm), system(s){
 	this->buyingMargin = System::reader->GetInteger("farmmanager" , "threshold_buy", 5);
 	this->sellingMargin = System::reader->GetInteger("farmmanager" , "threshold_sell", 20);
@@ -33,7 +32,7 @@ FarmManager::FarmManager(Farm* farm,System *s):myFarm(farm), system(s){
 			std::cerr << "The trading time is not a valid value" << std::endl;
 			dt_replace =bvd_const::tradingTimeIntervall.DAILY;
 		}
-	this->replacementPercentage = replacement * manageTime / dt_replace ; //if the farms get managed every month and the percentage is given per year, 1/12 (numDaysPerMonth/numDaysPerYear) of the percentage should be used at each managing process 
+	this->replacementPercentage = replacement * manageTime / dt_replace ; //if the farms get managed every month and the percentage is given per year, 1/12 (numDaysPerMonth/numDaysPerYear) of the percentage should be used at each managing process
 	this->plannedNumberOfCows = NULL;
 	this->readjustToFarmSize();
 	std::string sellStrat = System::reader->Get("farmmanager" , "standardOfferingMethod", "evenlyDistributed");
@@ -48,23 +47,23 @@ FarmManager::FarmManager(Farm* farm,System *s):myFarm(farm), system(s){
 			list->insert(list->end(),YOUNG_BULL);
 			list->insert(list->end(),OLD_BULL);
 			sellingPriorityList->insert(sellingPriorityList->end(), list);
-			
+
 			list = new FarmManager::CriteriaList();
 			list->insert(list->end(),OLD_COW);
 			sellingPriorityList->insert(sellingPriorityList->end(), list);
-			
+
 			list = new FarmManager::CriteriaList();
 			list->insert(list->end(),HEIFER_PRE_BREEDING);
 			sellingPriorityList->insert(sellingPriorityList->end(), list);
-			
+
 			list = new FarmManager::CriteriaList();
 			list->insert(list->end(),HEIFER_RDY_BREEDING);
 			sellingPriorityList->insert(sellingPriorityList->end(), list);
-			
+
 			list = new FarmManager::CriteriaList();
 			list->insert(list->end(),CALF);
 			sellingPriorityList->insert(sellingPriorityList->end(), list);
-			
+
 			list = new FarmManager::CriteriaList();
 			list->insert(list->end(),PREGNANT);
 			list->insert(list->end(),DAIRY_COW);
@@ -76,8 +75,8 @@ FarmManager::FarmManager(Farm* farm,System *s):myFarm(farm), system(s){
 			}
 			sellingPriorityList->insert(sellingPriorityList->end(), list);
 	}
-	FarmManager::applyQuarantineOnBuying = System::reader->GetBoolean("containment", "applyQuarantineOnBuying", false);
-	FarmManager::respectQuarantine = System::reader->GetBoolean("containment", "respectQuarantine", true);
+
+
 	registeredCowsToSell = new Cow::UnorderedSet();
 }
 
@@ -93,11 +92,11 @@ void FarmManager::manage(){
 		std::cout << "FarmManager: starting to manage farm" << std::endl;
 	#endif
 	this->resetGroupsOfAllCowsOfAllHerds();
-	
-	
-	if( FarmManager::respectQuarantine && FarmManager::applyQuarantineOnBuying) return;
+
+
+	if( System::getInstance(nullptr)->activeStrategy->respectQuarantine && System::getInstance(nullptr)->activeStrategy->applyQuarantineOnBuying) return;
 	std::set<Demand*>* requests = new std::set<Demand*>();
-	
+
 	this->calculateDemand(requests);
 
 	if(requests->size() > 0){
@@ -111,11 +110,17 @@ void FarmManager::manage(){
 		std::cout << "FarmManager: starting offering process" << std::endl;
 	#endif
 	Cow::UnorderedSet* cowsToSell = new Cow::UnorderedSet();
-
+	this->chooseCowsToOffer(cowsToSell);
 	if(!this->myFarm->isUnderQuarantine()){
-		this->chooseCowsToOffer(cowsToSell);
+
 
 		this->postOffer(cowsToSell);
+	}else{
+		//TODO: this is actually just a quick fix for a problem occuring when quarantine is used. Make this nice code!
+
+		for(auto cow : *cowsToSell){
+			this->system->getMarket()->sellDirectlyToSlaughterHouse(cow);
+		}
 	}
 		//delete cowsToSell; //don't delete this here. It will be deleted in the market, when the offer has been processed
 	//std::cout << "bought: " << requests->size() << " sold: " << cowsToSell->size() << " state: " << this->myFarm->total_number() << std::endl;
@@ -142,17 +147,17 @@ void FarmManager::readjustToFarmSize(){
 		std::cout << "got to know the herds at " << herds  << std::endl;
 			std::cout << "creating the array of size " << herds->size()  << std::endl;
 	#endif
-	
+
 	if(this->plannedNumberOfCows != NULL){
 		delete[] this->plannedNumberOfCows;
 		this->plannedNumberOfCows = NULL;
-		}		
+		}
 	this->plannedNumberOfCows = new int[ herds->size() ];
 	#ifdef _FARM_MANAGER_DEBUG_
 		std::cout << "filling the array" << std::endl;
 	#endif
 	for(int i = 0; i < herds->size(); i++){
-		 
+
 		this->plannedNumberOfCows[i] = (*herds)[i]->total_number();
 		#ifdef _FARM_MANAGER_DEBUG_
 			std::cout << "setting planned herd size to " << this->plannedNumberOfCows[i] << std::endl;
@@ -208,7 +213,7 @@ void FarmManager::chooseCowsToOffer(Cow::UnorderedSet* cowsToSell){
 		for(it2 = (*it)->begin(); it2 != (*it)->end(); it2++){
 			crit = (*it2);
 			int groupnum = (*it)->size();
-			
+
 			num = calculateNumberOfAnimalsPerGroup(crit,numberOfCowsToSell,groupnum, cowsToSell);
 //			std::cout << num << std::endl;
 			if(num > 0)
@@ -219,9 +224,9 @@ void FarmManager::chooseCowsToOffer(Cow::UnorderedSet* cowsToSell){
 
 void FarmManager::standardCalculateDemand(std::set<Demand*>* requests){
 	//ideally you would want to buy the differnece between the number of cows you want to own and the number of Cows that you own
-	//I thought this should be split up on the different groups in terms of age, but 
+	//I thought this should be split up on the different groups in terms of age, but
 	//most farms just buy pregnant cows in that step so we will just buy pregnant cows
-	
+
 	int numberOfMissingCows = this->standardCalculateOverallNumberToBuy();
 	if(numberOfMissingCows > this->buyingMargin ){
 		Demand *d = new Demand(PREGNANT, numberOfMissingCows, this->myFarm);
@@ -233,16 +238,22 @@ int FarmManager::standardCalculateOverallNumberToSell(){
 	int numberOfCowsToSell = 0;
 	int difference = 0;
 	int numberOfAnimalsWithType = 0;
-	
+	double tmp = this->replacementPercentage;
+	if(this->myFarm->isUnderQuarantine()){
+		this->replacementPercentage = 0.0;
+	}
 	std::vector<Herd*>* herds = this->myFarm->getHerds();
-	
+
 	for (int i=0; i < herds->size(); i++){
-		//take the number of cows that we want to have. Take off the percentage that we want to replace and substract the number of cows that exists. -> number of cows that are needed. If this is negative, the value of this number is the number of cows we want to sell. 
+		//take the number of cows that we want to have. Take off the percentage that we want to replace and substract the number of cows that exists. -> number of cows that are needed. If this is negative, the value of this number is the number of cows we want to sell.
 		difference = (int) (this->plannedNumberOfCows[i]*(1.0-this->replacementPercentage)) - (*herds)[i]->total_number() ;//implicit floor for performance
 		if(difference < 0 )
 			numberOfCowsToSell -= difference;
 		else
 			numberOfCowsToSell += difference;
+	}
+	if(this->myFarm->isUnderQuarantine()){
+		this->replacementPercentage = tmp;
 	}
 	return numberOfCowsToSell;
 }
@@ -263,7 +274,7 @@ int FarmManager::standardCalculateOverallNumberToBuy(bool replace){
 //			numberOfMissingCows -= difference;
 	}
 	return numberOfMissingCows;
-	
+
 }
 
 int FarmManager::standardCalculateNumberOfAnimalsPerGroup(Cow_Trade_Criteria crit,int overallNumber,int groupNum, Cow::UnorderedSet* cows){
@@ -275,7 +286,7 @@ int FarmManager::standardCalculateNumberOfAnimalsPerGroup(Cow_Trade_Criteria cri
 	std::vector<Herd*>* herds = this->myFarm->getHerds();
 	for (int i=0; i < herds->size(); i++)
 		numberOfAnimalsWithType = (*herds)[i]->getNumberOfCowsInGroup(crit);
-		
+
 	int datnum = (int) ((double)(overallNumber - cows->size())/groupNum);
 	switch(this->sellingStrategy){
 		case OLD_COWS_FIRST:
@@ -284,13 +295,13 @@ int FarmManager::standardCalculateNumberOfAnimalsPerGroup(Cow_Trade_Criteria cri
 				exit(9000);
 			}
 			//either return the number of animals of that group or the difference between the overall needed number of cows and the number of cows that is already going to be sold
-			
+
 			return datnum > numberOfAnimalsWithType ? numberOfAnimalsWithType : datnum;
-	
+
 		break;
 		default: // sellingStrategy NONE or EQUALLY_DISTRIBUTED
-		
-		//we want to split up the number of cows, that we want on all kinds of cows 
+
+		//we want to split up the number of cows, that we want on all kinds of cows
 		//#ignore int quotient problems
 		#ifdef _FARM_MANAGER_DEBUG_
 			std::cout << "FarmManager: returning the calculated number" << std::endl;
@@ -298,18 +309,18 @@ int FarmManager::standardCalculateNumberOfAnimalsPerGroup(Cow_Trade_Criteria cri
 //		if((int) (overallNumber*(double ) numberOfAnimalsWithType / (double) this->myFarm->total_number()) <= 0){
 //		std::cout << this->standardCalculateOverallNumberToBuy() << "\t" << cows->size() << "\t" ;
 //		std::cout << "calc: " <<  overallNumber << "\t" << numberOfAnimalsWithType << std::endl;}
-		return (int) (overallNumber*(double ) numberOfAnimalsWithType / (double) this->myFarm->total_number());	
+		return (int) (overallNumber*(double ) numberOfAnimalsWithType / (double) this->myFarm->total_number());
 		}
 }
 
 void FarmManager::standardOfferingMethod(int numberOfCowsToSell, Cow_Trade_Criteria crit, Cow::UnorderedSet* cows){
 	//you get the number of cows you want to sell
-	//calculate the number of cows of that type you can get 
+	//calculate the number of cows of that type you can get
 
 	std::vector<Herd*>* herds = this->myFarm->getHerds();
 	int numberToSell[herds->size()];
 	int totalNumber = 0;
-	
+
 	for (int i=0; i < herds->size(); i++){
 		numberToSell[i] = (*herds)[i]->getNumberOfCowsInGroup(crit);
 		totalNumber += numberToSell[i];
@@ -317,7 +328,7 @@ void FarmManager::standardOfferingMethod(int numberOfCowsToSell, Cow_Trade_Crite
 	#ifdef _FARM_MANAGER_DEBUG_
 		std::cout << "FarmManager: got the number of cows to sell: " << totalNumber << std::endl;
 	#endif
-	//TODO probably react if the number of cows to sell of that type is higher than the number of cows that are there 
+	//TODO probably react if the number of cows to sell of that type is higher than the number of cows that are there
 	if(totalNumber < numberOfCowsToSell){
 		#ifdef _FARM_MANAGER_DEBUG_
 		std::cerr << "there is not enough cows of that type " << std::endl;
@@ -325,15 +336,15 @@ void FarmManager::standardOfferingMethod(int numberOfCowsToSell, Cow_Trade_Crite
 		//numberOfCowsToSell = totalNumber;
 
 		}
-	
+
 	totalNumber = numberOfCowsToSell;
-	if(totalNumber > 0){ 
+	if(totalNumber > 0){
 		for (int i=0; i < herds->size(); i++){
 		//	std::cout << "FarmManager: choosing "<<totalNumber << "  cows from herd "<< (*herds)[i] <<  " with size " << (*herds)[i]->total_number() << " for criteria " << crit << "from farm with size " << this->myFarm->total_number() <<  std::endl;
 			//for every herd: take the appropraite number of cows from each herd by splitting up
 			#ifdef _FARM_MANAGER_DEBUG_
 				std::cout << "FarmManager: choosing "<< totalNumber << "  cows from herds "<< herds << " for criteria " << crit << std::endl;
-			#endif 
+			#endif
 			//get random cows from that group from that herd
 			(*herds)[i]->getNRandomCowsFromGroup(totalNumber,crit, cows);
 			totalNumber -= cows->size();
@@ -352,7 +363,7 @@ FarmManagerSellChoosingStrategy FarmManager::iniInputToSellingStrategy(std::stri
 		return OLD_COWS_FIRST;
 	else if(input.compare("NONE") == 0)
 		return NONE;
-		
+
 	return NONE;
 }
 
@@ -361,5 +372,5 @@ void FarmManager::registerCowForSale(const Cow* cow){
 }
 
 inline bool FarmManager::isUnderQuarantine(){
-	return this->myFarm->isUnderQuarantine() && FarmManager::respectQuarantine;
+	return this->myFarm->isUnderQuarantine() && System::getInstance(nullptr)->activeStrategy->respectQuarantine;
 }

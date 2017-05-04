@@ -38,7 +38,9 @@ enum class Event_Type
       QUARANTINEEND			= -104,
       JUNGTIER				= -105,
       JUNGTIER_EXEC			= -106,
-      JUNGTIER_SMALL_GROUP = -107
+      JUNGTIER_SMALL_GROUP = -107,
+      ChangeContainmentStrategy = -108
+
       };
 
 // At least the numbers of the system events should stay in this particular order because
@@ -66,7 +68,7 @@ class Event
 };
 
 
-class Trade_Event : public Event 
+class Trade_Event : public Event
 {
  public:
   Trade_Event( double exec_time, int cow_id , Farm* destination_farm );
