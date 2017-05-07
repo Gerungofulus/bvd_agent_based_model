@@ -6,11 +6,11 @@
 const std::string SQLiteHandler::eventTableName = "Event";
 const std::string SQLiteHandler::cowTableName = "Cow";
 const std::string SQLiteHandler::templateDBPath = "templates/databaseTemplate.sqlite";
-SQLiteHandler::SQLiteHandler(INIReader& reader):FileHandler(reader){
+SQLiteHandler::SQLiteHandler():FileHandler(){
 	this->fileExtension = ".sqlite";
 	this->setPath();
-	struct stat buffer;   
-	bool exists = (stat (fullFilePath.c_str(), &buffer) == 0); 
+	struct stat buffer;
+	bool exists = (stat (fullFilePath.c_str(), &buffer) == 0);
 	if(!exists || this->overwrite){
 		std::ifstream  src(templateDBPath.c_str(), std::ios::binary);
 		std::ofstream  dst(fullFilePath.c_str(),   std::ios::binary);
@@ -23,7 +23,7 @@ SQLiteHandler::SQLiteHandler(INIReader& reader):FileHandler(reader){
 		exit(-5000);
 	}
 	this->loadOrSaveDb(this->pMemory, templateDBPath.c_str(), 0);
-	
+
 }
 
 SQLiteHandler::~SQLiteHandler(){
@@ -35,49 +35,49 @@ void SQLiteHandler::logFarms(const double time,const std::vector< Farm* >*farms)
 void SQLiteHandler::write_to_file(const double time){
 
 	//int rc = this->loadOrSaveDb(this->pMemory, this->fullFilePath.c_str(), 1);
-	
+
 }
 
 inline void SQLiteHandler::runSQLQuery(const std::ostringstream& sqlstream){
-	
+
 
    	char *zErrMsg = 0;
    	int rc;
    	const std::string sqlStr = sqlstream.str();
 	char* sql =(char*) sqlStr.c_str();
-   	
-   
+
+
 	rc = sqlite3_exec(this->pMemory, sql, NULL/*callback*/, 0, &zErrMsg);
    	if( rc != SQLITE_OK ){
     	fprintf(stderr, "SQL error: %s\n", zErrMsg);
     	sqlite3_free(zErrMsg);
    	}
-   	
+
 }
 
 void SQLiteHandler::logEvent(const Event* e){
-	std::ostringstream sql;	
+	std::ostringstream sql;
 
    /* Create SQL statement */
-   	
+
 	   sql << "INSERT INTO '";
 	   sql << eventTableName;
 	   sql << "' (type_id,exec_time,farm_id) ";
 	   sql << "VALUES (";
 	   sql << (int) e->type;
 	   sql << ",";
-	   sql << e->execution_time; 
+	   sql << e->execution_time;
 	   sql << " , ";
 	   sql << (e->farm != NULL ? e->farm->id : -1);
 	   sql << ");";
-	   
+
 		this->runSQLQuery(sql);
 }
 void SQLiteHandler::logResultingEventOfInfection(const Event* e){};
 void SQLiteHandler::logBirth(const Cow *c){
 	if(c == NULL) return;
-	
-		std::ostringstream sql;	
+
+		std::ostringstream sql;
 
    /* Create SQL statement */
 
@@ -89,13 +89,13 @@ void SQLiteHandler::logBirth(const Cow *c){
 	   sql << c->birth_time << ",";
 	   sql << (c->mother != NULL ? c->mother->id() : -1) << ",";
 	  	sql << ((c->herd != NULL && c->herd->farm != NULL) ? c->herd->farm->id : -1) << ",";
-	   sql << (int) c->infection_status; 
+	   sql << (int) c->infection_status;
 	   sql << " , ";
 	   sql << (int) c->female ;
 	   sql << ");";
-	   
+
 		this->runSQLQuery(sql);
-	
+
 
 }
 int SQLiteHandler::loadOrSaveDb(sqlite3 *pInMemory, const char *zFilename, int isSave){ //copied from http://www.sqlite.org/backup.html
@@ -111,14 +111,14 @@ int SQLiteHandler::loadOrSaveDb(sqlite3 *pInMemory, const char *zFilename, int i
   if( rc==SQLITE_OK ){
 
     /* If this is a 'load' operation (isSave==0), then data is copied
-    ** from the database file just opened to database pInMemory. 
+    ** from the database file just opened to database pInMemory.
     ** Otherwise, if this is a 'save' operation (isSave==1), then data
     ** is copied from pInMemory to pFile.  Set the variables pFrom and
     ** pTo accordingly. */
     pFrom = (isSave ? pInMemory : pFile);
     pTo   = (isSave ? pFile     : pInMemory);
 
-    /* Set up the backup procedure to copy from the "main" database of 
+    /* Set up the backup procedure to copy from the "main" database of
     ** connection pFile to the main database of connection pInMemory.
     ** If something goes wrong, pBackup will be set to NULL and an error
     ** code and message left in connection pTo.
@@ -136,12 +136,12 @@ int SQLiteHandler::loadOrSaveDb(sqlite3 *pInMemory, const char *zFilename, int i
       (void)sqlite3_backup_finish(pBackup);
     }
     rc = sqlite3_errcode(pTo);
-    
+
   }
 if(rc != SQLITE_OK){
 	    std::cout << "dieeeeee" << std::endl;
 	    exit(-5001);
-	    
+
     }
   /* Close the database connection opened on database file zFilename
   ** and return the result of this function. */
