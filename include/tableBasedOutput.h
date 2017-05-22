@@ -3,12 +3,24 @@
 
 #include "FileHandler.h"
 #include "BVDSettings.h"
+#include <map>
 class Trade_Event;
 class Event;
 class Cow;
 class Farm;
 
-struct TradeDataPoint{
+struct Data{};
+
+template<typename T>
+struct DataPoint:public Data{
+	virtual T operator[] (int i) = 0;
+	//virtual operator const T*() = 0;
+	virtual operator T*() = 0;
+	static const int size;
+};
+
+struct TradeDataPoint: public DataPoint<double>{
+	// TradeDataPoint(double data, double)
 	double date;
 	double srcFarmID;
 	double destFarmID;
@@ -22,7 +34,7 @@ struct TradeDataPoint{
 	static const int size;
 };
 
-struct FarmDataPoint{
+struct FarmDataPoint: public DataPoint<int>{
 	int id;
 	int numberS;
 	int numberTI;
@@ -33,7 +45,7 @@ struct FarmDataPoint{
 	static const int size;
 };
 
-struct CowDataPoint{
+struct CowDataPoint: public DataPoint<double>{
 	double id;
 	double lastConceptionTime;
 	double female;
@@ -51,7 +63,7 @@ struct CowDataPoint{
 	static const int size;
 };
 
-struct TestDataPoint{
+struct TestDataPoint: public DataPoint<double>{
 	double id;
 	double date;
 	double age;
@@ -66,7 +78,7 @@ struct TestDataPoint{
 	static const int size;
 };
 
-struct InfectionResultDataPoint{
+struct InfectionResultDataPoint: public DataPoint<int>{
 	int id;
 	int resultType;
 	int calfStatus;
@@ -74,7 +86,7 @@ struct InfectionResultDataPoint{
 	operator int*();
 	static const int size;
 };
-struct intermediateCalvingTimePoint{
+struct intermediateCalvingTimePoint: public DataPoint<double>{
 	double id;
 	double intermediateCalvingTime;
 	double healthState;
@@ -111,6 +123,7 @@ protected:
     typedef std::vector<InfectionResultDataPoint> infectionResultDataSave;
 
 
+
     void logTrade(const Trade_Event* event);
     void logDyingCow(const Event* event,const Cow* cow);
     void logInfection(const Event* event,const Cow* cow,const bool didLooseCalf=false);
@@ -128,9 +141,21 @@ protected:
     template<typename T>
     void clearMyStorage(std::vector<T>* storage);
 
+	typedef std::map<const std::string, std::vector<Data>*> MapOfSaves;
+
+	const MapOfSaves saveMap;
+
+	const MapOfSaves prefixedSaveMap;
+
+	std::vector<std::string> tableNames;
+	std::vector<std::string> tablePrefixes;
 
 
+	std::vector<std::vector<Data>*> stores;
 
+	static const std::string intermediateCalvingTimeTableName;
+	static const std::string infectionResultTabelName;
+	static const std::string testsTableName;
 
 
     std::vector<double>* farmDataTimes;

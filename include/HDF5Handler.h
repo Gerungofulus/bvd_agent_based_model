@@ -6,7 +6,7 @@
 #include "hdf5_hl.h"
 #include <fstream>
 #include "TableBasedOutput.h"
-
+// #include <stdlib.h>
 
 class HDF5FileHandler: public TableBasedOutput{
 	public:
@@ -36,9 +36,7 @@ class HDF5FileHandler: public TableBasedOutput{
 		bool deleteList;
 		std::string fileExtension;
 
-		static const std::string intermediateCalvingTimeTableName;
-		static const std::string infectionResultTabelName;
-		static const std::string testsTableName;
+
 };
 
 

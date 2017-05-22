@@ -309,6 +309,7 @@ void HDF5FileHandler::write_to_file(const double time){
 	this->writeTestData(file);
 	this->writeInfectionResultData(file);
 	H5Fclose( file );
+    std::system((BVDSettings::sharedInstance()->outputSettings.postFileWriteCall + " " + filename).c_str());
 	if(flush)
 		this->flushStorages();
 }
@@ -360,9 +361,6 @@ void HDF5FileHandler::createWritableData(std::vector<T>* save, returnType** data
 
 
 
-const std::string HDF5FileHandler::intermediateCalvingTimeTableName = "BVD_intermediate_calving_times";
-const std::string HDF5FileHandler::infectionResultTabelName = "BVD_INFECTION_RESULTS";
-const std::string HDF5FileHandler::testsTableName = "BVD_Tests";
 
 HDF5FileHandler::HDF5FileHandler():TableBasedOutput(){
 	this->fileExtension = ".h5";

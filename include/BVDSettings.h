@@ -21,6 +21,11 @@ struct OutputSettings{
     std::string fileprefix;
     std::string path;
     fileMode mode;
+
+	bool writeAllDeadCows;
+	bool writeDeadPIS;
+	bool writeTradeAdjacencyMatrix;
+	std::string postFileWriteCall;
 };
 class BVDSettings{
 public:

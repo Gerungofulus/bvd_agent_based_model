@@ -3,6 +3,16 @@
 #include "Herd.h"
 #include "Farm.h"
 #include "Events.h"
+
+const std::string TableBasedOutput::intermediateCalvingTimeTableName = "BVD_intermediate_calving_times";
+const std::string TableBasedOutput::infectionResultTabelName = "BVD_INFECTION_RESULTS";
+const std::string TableBasedOutput::testsTableName = "BVD_Tests";
+
+// const std::map<const std::string, std::vector<Data>*> TableBasedOutput::saveMap = {
+// 	{TableBasedOutput::intermediateCalvingTimeTableName,this->intermediateCalvingTimes},
+// 	{TableBasedOutput::infectionResultTabelName , this->infectionResultSave}
+// };
+
 TableBasedOutput::TableBasedOutput(){
 	this->mode = BVDSettings::sharedInstance()->outputSettings.mode;
 	this->trades = new TradeDataSave();
@@ -18,6 +28,14 @@ TableBasedOutput::TableBasedOutput(){
 	this->setPath();
 	this->testStorage = new TestDataSave();
 	this->infectionResultSave = new infectionResultDataSave();
+
+	MapOfSaves MOS;
+	// MOS[TableBasedOutput::intermediateCalvingTimeTableName] = this->intermediateCalvingTimes;
+	// this->saveMap = {
+	// 	{TableBasedOutput::intermediateCalvingTimeTableName,this->intermediateCalvingTimes},
+	// 	{TableBasedOutput::infectionResultTabelName , this->infectionResultSave}
+	// };
+
 }
 TableBasedOutput::~TableBasedOutput(){
 	this->flushStorages();
@@ -57,7 +75,13 @@ void TableBasedOutput::logFarms(const double time,const std::vector< Farm* >*far
 			int numTI = farm->number_of_TI();
 			int numR = farm->number_of_R();
 
-			FarmDataPoint p = {farm->id, numS, numTI, numPI, numR};
+			FarmDataPoint p{};
+			p.id = farm->id;
+			p.numberS = numS;
+			p.numberTI = numTI;
+			p.numberPI = numPI;
+			p.numberR = numR;
+			// {farm->id, numS, numTI, numPI, numR};
 			data->push_back(p);
 
 		}
@@ -109,7 +133,10 @@ void TableBasedOutput::logBirth(const Cow *c){}
 
 void TableBasedOutput::logResultingEventOfInfection(const Event* e){
 	Cow *c = Cow::get_address(e->id);
-	InfectionResultDataPoint p = {c->id(), (int) e->type , (int) c->calf_status};
+	InfectionResultDataPoint p{};// = {c->id(), (int) e->type , (int) c->calf_status};
+	p.id = c->id();
+	p.resultType = (int)e->type;
+	p.calfStatus = (int)c->calf_status;
 	this->infectionResultSave->push_back(p);
 
 }
@@ -137,8 +164,14 @@ void TableBasedOutput::logTrade(const Trade_Event* event){
 	double cowID =  (double) c->id();
 	double CowSex = (double) c->female;
 //	std::cout << " f" << std::endl;
-	TradeDataPoint point = {event->execution_time, srcFarmID, destFarmID, cowID, event->execution_time - c->birth_time, CowSex};
+	TradeDataPoint point{};// = {event->execution_time, srcFarmID, destFarmID, cowID, event->execution_time - c->birth_time, CowSex};
 //	std::cout << " f" << std::endl;
+	point.date = event->execution_time;
+	point.srcFarmID = srcFarmID;
+	point.destFarmID = destFarmID;
+	point.cowID = cowID;
+	point.cowAge = event->execution_time - c->birth_time;
+	point.cowSex = CowSex;
 	this->trades->push_back(point);
 //	std::cout << " amoll amoll c c g" << std::endl;
 }
@@ -158,12 +191,19 @@ void TableBasedOutput::logInfectionRateChangeEvent(const Event* event){}
 
 
 TestDataPoint TableBasedOutput::testEventToDataPoint(const Event*e, const Cow* c){
-	TestDataPoint point = {(double) c->id(),e->execution_time,c->age(),(double) e->type,(double) c->female,(double) c->knownStatus, (double) c->infection_status, (double) c->knownStatus};
-
+	TestDataPoint point{};// = {(double) c->id(),e->execution_time,c->age(),(double) e->type,(double) c->female,(double) c->knownStatus, (double) c->infection_status, (double) c->knownStatus};
+	point.id = (double) c->id();
+	point.date = e->execution_time;
+	point.age = c->age();
+	point.testType = (double) e->type;
+	point.sex = c->female;
+	point.result = (double) c->knownStatus;
+	point.infectiousState = (double) c->infection_status;
+	point.knownState = (double) c->knownStatus;
 	return point;
 }
 CowDataPoint TableBasedOutput::createCowDataPointForCow(const Event* event,const Cow* cow){
-	CowDataPoint point;
+	CowDataPoint point{};
 
 	double age ;
 	if(event == NULL){
@@ -191,7 +231,10 @@ CowDataPoint TableBasedOutput::createCowDataPointForCow(const Event* event,const
 							state = 1.0;
 						else if(cow->infection_status == Infection_Status::PERSISTENTLY_INFECTED)
 							state = 2.0;
-						intermediateCalvingTimePoint p = {(double) cow->id(),intermediateCalvingTime,state};
+						intermediateCalvingTimePoint p{};// = {(double) cow->id(),intermediateCalvingTime,state};
+						p.id = (double) cow->id();
+						p.intermediateCalvingTime = intermediateCalvingTime;
+						p.healthState = state;
 						this->intermediateCalvingTimes->push_back(	p );
 					}else{
 		//				std::cout << lastCalvingTime << " " << cow->birthTimesOfCalves[j] << std::endl;
@@ -213,8 +256,19 @@ CowDataPoint TableBasedOutput::createCowDataPointForCow(const Event* event,const
 	if(cow->birthTimesOfCalves != NULL && cow->birthTimesOfCalves[0] != -1.0)
 		firstCalvingTime = cow->birthTimesOfCalves[0] - cow->birth_time;
 
-	point = {(double) (cow->id()),cow->last_conception_time,(double) female,age, (double) (j-1),  eventType, firstCalvingTime, cow->birth_time, (double) cow->knownStatus, cow->firstTestTime, cow->lastTestTime};
-
+	//point = {(double) (cow->id()),cow->last_conception_time,(double) female,age, (double) (j-1),  eventType, firstCalvingTime, cow->birth_time, (double) cow->knownStatus, cow->firstTestTime, cow->lastTestTime};
+	point.id = (double) (cow->id());
+	point.lastConceptionTime = cow->last_conception_time;
+	point.female = (double) female;
+	point.age = age;
+	point.numberOfCalves = (double) (j-1);
+	point.causeOfDeath = eventType;
+	point.firstCalvingTime = firstCalvingTime;
+	point.birthTime = cow->birth_time;
+	point.knownState = (double) cow->knownStatus;
+	point.numberOfVaccinations = (double) cow->numberOfVaccinations;
+	point.firstTestTime = cow->firstTestTime;
+	point.lastTestTime = cow->lastTestTime;
 	return point;
 
 }
@@ -311,7 +365,7 @@ double CowDataPoint::operator[] (int i){
 	}
 	return retVal;
 }
-const int CowDataPoint::size = 10;
+const int CowDataPoint::size = 12;
 CowDataPoint::operator double*(){
 
 	double *dat = new double[CowDataPoint::size];

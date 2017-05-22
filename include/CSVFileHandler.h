@@ -6,9 +6,7 @@ class CSVFileHandler: public TableBasedOutput{
     CSVFileHandler();
     ~CSVFileHandler();
 
-    <template T>
-    void writeSaveToFile(const std:vector<T>* save,const std::string& fileName);
-    void writeDataPointToFile(const T& point, const std::string& fileName);
+
 
 private:
     void writeLivingPIsToFile(const std::string& fileName);
@@ -23,6 +21,11 @@ private:
 
     template<typename T, typename returnType>
     void createWritableData(std::vector<T>* save, returnType** data);
+
+    template<typename T>
+    void writeSaveToFile(const std::vector<T>* save,const std::string& fileName);
+    template<typename T>
+    void writeDataPointToFile(const T& point, const std::ofstream& filestream);
 
 };
 

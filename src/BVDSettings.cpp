@@ -74,6 +74,10 @@ void BVDSettings::initializeOutputSettings(){
     std::string fileMode = reader->Get("output", "mode", "single_file");
 	this->outputSettings.mode = BVDSettings::iniInputToFileMode(fileMode);
     this->outputSettings.fullFilePath = this->outputSettings.path + this->outputSettings.fileprefix + this->outputSettings.fileExtension;
+    this->outputSettings.writeAllDeadCows = reader->GetBoolean("output", "writeAllDeadCows", true);
+    this->outputSettings.writeDeadPIS = reader->GetBoolean("output", "writeDeadPIS", true);
+    this->outputSettings.writeTradeAdjacencyMatrix = reader->GetBoolean("output", "writeTradeAdjacencyMatrix", true);
+    this->outputSettings.postFileWriteCall = reader->Get("output", "postFileWriteCall", "");
 }
 
 BVDSettings::~BVDSettings(){
