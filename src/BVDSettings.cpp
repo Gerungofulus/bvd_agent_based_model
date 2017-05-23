@@ -11,7 +11,8 @@ BVDSettings* BVDSettings::sharedInstance(INIReader* reader){
 
 BVDSettings::BVDSettings(INIReader* reader){
     this->reader = reader;
-this->initializeStrategies();
+    this->initializeStrategies();
+    this->initializeOutputSettings();
 }
 BVDSettings::BVDSettings(const BVDSettings&){
 
@@ -65,7 +66,19 @@ void BVDSettings::initializeStrategy(const std::string& name){
     std::cout << "starting strategy at : " << newStrat->startTime << std::endl;
     this->strategies.push(newStrat);
 }
-
+void BVDSettings::initializeOutputSettings(){
+    this->outputSettings = {};
+    this->outputSettings.overwrite = reader->GetBoolean("output", "overwrite", false);
+    this->outputSettings.fileprefix = reader->Get("output", "fileprefix", "output_");
+    this->outputSettings.path = reader->Get("output", "path", "./");
+    std::string fileMode = reader->Get("output", "mode", "single_file");
+	this->outputSettings.mode = BVDSettings::iniInputToFileMode(fileMode);
+    this->outputSettings.fullFilePath = this->outputSettings.path + this->outputSettings.fileprefix + this->outputSettings.fileExtension;
+    this->outputSettings.writeAllDeadCows = reader->GetBoolean("output", "writeAllDeadCows", true);
+    this->outputSettings.writeDeadPIS = reader->GetBoolean("output", "writeDeadPIS", true);
+    this->outputSettings.writeTradeAdjacencyMatrix = reader->GetBoolean("output", "writeTradeAdjacencyMatrix", true);
+    this->outputSettings.postFileWriteCall = reader->Get("output", "postFileWriteCall", "");
+}
 
 BVDSettings::~BVDSettings(){
     while(!this->strategies.empty()){
@@ -78,5 +91,16 @@ BVDSettings::CGuard::~CGuard(){
 	if(BVDSettings::_instance != nullptr){
 		delete BVDSettings::_instance;
 		BVDSettings::_instance = nullptr;
+	}
+}
+fileMode BVDSettings::iniInputToFileMode(std::string& fileMode,bool shallExit){
+	if(fileMode.compare("single_file") == 0){
+		return single_file;
+	}else if(fileMode.compare("multi_file") == 0 || fileMode.compare("split_file") == 0){
+		return multi_file;
+	}else{
+		std::cout << "The specified output mode \"" << fileMode <<"\" does not exist" <<std::endl;
+		if(shallExit)
+			exit(4);
 	}
 }

@@ -16,8 +16,8 @@
 
 
 AdvancedOutput::AdvancedOutput(INIReader& reader){
-	
-  
+
+
 //	auto hasEnding =[this] (std::string const &fullString, std::string const &ending) {
 //		if (fullString.length() >= ending.length()) {
 //			return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
@@ -25,31 +25,31 @@ AdvancedOutput::AdvancedOutput(INIReader& reader){
 //			return false;
 //		}
 //	};
-  	
-	
-	
+
+
+
 	std::string filetype = reader.Get("output", "filetype", "hdf5");
 	this->type = AdvancedOutput::iniInputToFileType(filetype);
-	
-	
-	
+
+
+
 	switch(this->type ){
 		case SQLITE:
-			this->handler = new SQLiteHandler(reader);
+			this->handler = new SQLiteHandler();
 			break;
 		default:
 		case HDF5:
-			this->handler = new HDF5FileHandler(reader);
+			this->handler = new HDF5FileHandler();
 			break;
 	}
-	
 
-	
-} 
+
+
+}
 AdvancedOutput::~AdvancedOutput()
 {
 	delete handler;
-	
+
 }
 void AdvancedOutput::logBirth(const Cow *c){
 	if(c == NULL) return;
@@ -94,11 +94,5 @@ fileType AdvancedOutput::iniInputToFileType(std::string& fileType, bool shallExi
 	}else{
 		return HDF5;
 	}
-	
+
 }
-
-
-
-
-
-

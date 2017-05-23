@@ -17,6 +17,7 @@ System* System::getInstance(INIReader* reader){
 	static CGuard g;   // Speicherbereinigung
 	if (!_instance){
 		System::reader = reader;
+		BVDSettings::sharedInstance(reader);
 		double t_start = reader->GetReal("simulation", "t_start", 0.0);
 
 		double dt_log  = reader->GetReal("simulation", "dt_log", 1.0);

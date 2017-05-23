@@ -2,7 +2,7 @@
 #define __SQLiteHandler_h_
 #include "FileHandler.h"
 #include <sstream>
-#include <sqlite3.h> 
+#include <sqlite3.h>
 #include <sys/stat.h>
 #include <fstream>
 
@@ -12,9 +12,9 @@ class Farm;
 
 class SQLiteHandler: public FileHandler{
 	public:
-	SQLiteHandler(INIReader& reader);
+	SQLiteHandler();
 	~SQLiteHandler();
-	
+
 	//void saveCow(const Cow* c);
 	void logFarms(const double time,const std::vector< Farm* >*farms);
 	void logBirth(const Cow* c);
@@ -29,7 +29,7 @@ class SQLiteHandler: public FileHandler{
 		static const std::string templateDBPath;
 		int rc;                   /* Function return code */
 		//sqlite3 *pFile;           /* Database connection opened on zFilename */
-		
+
 		sqlite3 *pMemory;          /* Database to copy to (pFile or pInMemory) */
 		sqlite3 *pTemplate;           /* Database to copy from (pFile or pInMemory) */
 		int loadOrSaveDb(sqlite3 *pInMemory, const char *zFilename, int isSave);
