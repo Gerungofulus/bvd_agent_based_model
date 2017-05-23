@@ -16,12 +16,12 @@ int und (int ranLRmax)			//uniform number distribution
 
  	r = gsl_rng_alloc (T);
 
- 	gsl_rng_env_setup();  
+ 	gsl_rng_env_setup();
  	//set a random seed
- 	unsigned int seed = (time(NULL)  + random());   
+ 	unsigned int seed = (time(NULL)  + random());
     gsl_rng_set (r,seed);
 
-  
+
     int ranLR;
   ranLR = gsl_rng_uniform_int(r, ranLRmax);
   //printf("A random long from U[ranLRmin,%d-1): %d\n", ranLRmax, ranLR);
@@ -80,7 +80,7 @@ int days_till_calve_dies()					//gives the days untill a calve dies within its f
 int number_of_insaminations(int calvingnumber)		//number of total insaminations, dependent on the number of calvings the cow went through
 {
 	int index = und(1001);
-	printf("zufall: %d\n", index);			
+	printf("zufall: %d\n", index);
 
 	if (calvingnumber ==0){							// if it's the first pregnancy
 		if (index >0 && index <= 0.2){
@@ -112,16 +112,16 @@ int number_of_insaminations(int calvingnumber)		//number of total insaminations,
 		}
 		if (index >329 && index <= 1000){
 			return 1;
-		}	
+		}
 
 		}
 }
 
 int calve_born_dead(int calvingnumber)				// if calve is born dead return 1, if not return -1
 {
-	int index = und(101);						// 17% of calves of heifers are born dead 
+	int index = und(101);						// 17% of calves of heifers are born dead
 
-	if (calvingnumber=0){
+	if (calvingnumber==0){
 		if (index >0 && index <= 17){
 			return 1;
 		}
