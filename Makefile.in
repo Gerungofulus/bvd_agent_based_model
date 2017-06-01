@@ -3,7 +3,10 @@ CFLAGS = -Wall -g -pedantic -fopenmp #-D_DEBUG_ # -D _OUTPUT_DEBUG_ #-D_FARM_MAN
 CCFLAGS = -std=c++11 $(CFLAGS)
 LFLAGS = -lgsl -lgslcblas -lm -lsqlite3
 
-CUSTOMLIBSPATH := lib
+# new
+CUSTOMLIBSPATH := lib 
+#
+
 LD_INCLUDE=  -L $(CUSTOMLIBSPATH)
 
 INC = -I/usr/include -I/usr/include/hdf5/serial -I/usr/local/include -I. -I./projectImports/inih/ -I include
@@ -15,14 +18,18 @@ LFLAGS := $(LFLAGS) -lhdf5 -lhdf5_hl
 #check for macports
 PORTSEXIST := $(shell ports -v dot 2> /dev/null)
 
+#new
 ifdef PORTSEXIST
-INC := $(INC) -I /opt/local/include/
+INC := $(INC) -I /opt/local/include/ 
 LD_INCLUDE := $(LD_INCLUDE) -L /opt/local/lib/
 endif
+#
 else
 CC = g++
 CCC = g++
+#mod
 LD_INCLUDE := $(LD_INCLUDE) -L/usr/lib/x86_64-linux-gnu/serial -L/usr/lib -L/usr/lib/x86_64-linux-gnu/
+#
 LFLAGS := $(LFLAGS) -lhdf5_serial -lhdf5_serial_hl # for some reason or Linux systems required these library names in order to work as expected
 endif
 SRCDIR := src
@@ -32,8 +39,9 @@ TARGET := build/bvd_agent_simulation
 SRCEXT := cpp
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
+#INC = some paths...
 
-
+#CUSTOMLIBSPATH := lib
 
 INIOBJECTS := $(CUSTOMLIBSPATH)/ini.o $(CUSTOMLIBSPATH)/INIReader.o
 
