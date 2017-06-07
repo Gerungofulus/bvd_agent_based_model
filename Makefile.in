@@ -4,7 +4,7 @@ CCFLAGS = -std=c++11 $(CFLAGS)
 LFLAGS = -lgsl -lgslcblas -lm -lsqlite3
 
 # new
-CUSTOMLIBSPATH := lib 
+CUSTOMLIBSPATH := lib
 #
 
 LD_INCLUDE=  -L $(CUSTOMLIBSPATH)
