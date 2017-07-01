@@ -25,7 +25,7 @@ enum Cow_Trade_Criteria{
 	INFERTILE =3,
 	PREGNANT =4,
 	DAIRY_COW = 5,
-	OLD_COW = 6, 
+	OLD_COW = 6,
 	MALE_CALF = 7,
 	YOUNG_BULL = 8,
 	OLD_BULL = 9,
@@ -60,7 +60,7 @@ enum class KnownStatus{
 
 
 
-    
+
 class Cow_Pointer_Sort_Criterion
 {
  public:
@@ -78,7 +78,7 @@ class Cow
 		~Cow();
 		typedef std::set<Cow*,Cow_Pointer_Sort_Criterion> Set;
 		typedef std::unordered_set<Cow*> UnorderedSet;
-		int               id() const;                  /// Identification number. This is unique for the entire simulation  
+		int               id() const;                  /// Identification number. This is unique for the entire simulation
 		double            birth_time;            /// Time of birth
 		bool              female;                /// Whether the calf is female
 		Infection_Status  infection_status;
@@ -87,7 +87,7 @@ class Cow
 		bool              has_been_pregnant_at_all_so_far;// Self explanatory, innit?
 		Calf_Status       calf_status;           /// State of the calf, can be NO_CALF which means that this Cow is not pregnant at the moment
 		Herd *            herd	;                  /// Pointer to the herd, this cow belongs to
-		
+
 		Cow *             mother;
 		Cow::UnorderedSet          children;
 		Cow::UnorderedSet*		  Group; // the group in the herd to which the cow belongs
@@ -97,19 +97,19 @@ class Cow
 		//Even though the farm keeps track of these as well for all cows, these are necessary as a cow might carry future infection rate changing events which would apply to a different farm after a trade.
 		std::unordered_set<Event* > future_irc_events_that_move;
 		double *birthTimesOfCalves;
-		
+
 		bool hasBeenTestedPositiveYet;
-		
+
 		double age() const;
-		KnownStatus knownStatus;	
+		KnownStatus knownStatus;
 		int numberOfVaccinations;
-		
+
 		static Cow *   get_address( int search_id ); /// This returns the memory adress of a cow. Will return null if the cow is not there (anymore).
 		static int     total_number();
 		static int     number_of_living_cows();
 		static System* system;
 		static void    set_system( System * );         /// This must be called once, before the simulation can run.
-		
+
 		Cow::UnorderedSet* getGroup();
 		void setGroup(Cow::UnorderedSet* set);
 		double timeOfInfection;
@@ -117,7 +117,7 @@ class Cow
 		double lastTestTime, firstTestTime;
 		bool testCow(const Event* e);
 		bool isTestedPositive(const Event* e);
-		static bool quarantineAfterPositiveTest;
+
 	private:
 		Event* end_of_vaccination_event;
 		void init(const double& birth_time, Cow *mother, bool female);
@@ -142,12 +142,8 @@ class Cow
 		static Calf_Status stringToCalfStatus(const std::string& input);
 		static Infection_Status stringToInfectionStatus(const std::string& input);
 		void scheduleInsemination(const double& time, double& vaccTime, const Cow* c=NULL);
-		
+
 		bool testAgain();
 };
 
-
-
-
-
-#endif	
+#endif

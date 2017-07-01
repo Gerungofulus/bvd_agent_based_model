@@ -11,7 +11,7 @@
 #include <iostream>
 #include <array>
 #include "FarmManager.h"
-
+#include "BVDContainmentStrategy.h"
 int Farm::counter = 0;
 Farm::Farm( System * s )
 {
@@ -28,7 +28,7 @@ Farm::Farm( System * s )
 
 Farm::~Farm()
 {
-  
+
 }
 
 
@@ -56,7 +56,7 @@ double Farm::next_infection_rate_change( Event *current )
 }
 
 void Farm::register_future_infection_rate_changing_event( Event* e )
-{  
+{
   future_infection_rate_changing_events.push((Event*) e );
   if ( e->type == Event_Type::INFECTION )
     {
@@ -67,7 +67,7 @@ void Farm::register_future_infection_rate_changing_event( Event* e )
       }
 		next_infection_event = (Event*) e ;
     }
-    
+
 }
 void Farm::delete_infection_rate_change_event( Event* e){
 	if(e == next_infection_event)
@@ -83,8 +83,8 @@ void Farm::delete_infection_rate_change_event( Event* e){
 		future_infection_rate_changing_events.push(tmp.top());
 		tmp.pop();
 	}
-	
-	
+
+
 }
 void Farm::invalidate_next_infection_event()
 {
@@ -100,9 +100,9 @@ void Farm::getManaged(){
 }
 
 std::vector<Herd*>* Farm::getHerds(){
-	
+
 	return &(this->my_herds);
-	
+
 }
 
 bool Farm::isUnderQuarantine(){
@@ -111,7 +111,7 @@ bool Farm::isUnderQuarantine(){
 void Farm::putUnderQuarantine(){
 
 	this->quarantine = true;
-	double exTime = this->system->getCurrentTime() + System::reader->GetInteger("containment", "quarantineTime", 40);
+	double exTime = this->system->getCurrentTime() + System::getInstance(nullptr)->activeStrategy->quarantineTime;
 	FARM_EVENT* e;
 	e = new FARM_EVENT(exTime, Event_Type::QUARANTINEEND, this);
 
@@ -123,7 +123,7 @@ void Farm::putUnderQuarantine(){
 
 std::vector<Cow*>* Farm::getPIs(){
 	int size = 0;
-	
+
 	for(auto herd : this->my_herds){
 		size += herd->getPIs()->size();
 	}
@@ -131,7 +131,7 @@ std::vector<Cow*>* Farm::getPIs(){
 	//returnVec->reserve(size);
 	for(auto herd : this->my_herds){
 		returnVec->insert(returnVec->end(), herd->getPIs()->begin(), herd->getPIs()->end());
-	}	
+	}
 	return returnVec;
 }
 
@@ -150,8 +150,8 @@ int Farm::number_of_TI() const
   int j=0;
   for ( auto const h : my_herds )
     j += h->getNumTI();
-   
- 
+
+
   return j;
 }
 int Farm::number_of_R() const
@@ -176,11 +176,11 @@ int Farm::total_number() const
   return j;
 }
 
-void Farm::infection_rate_has_changed( Event * e ){ //e points to the event by which this just happened. 
+void Farm::infection_rate_has_changed( Event * e ){ //e points to the event by which this just happened.
 
   if ( e == next_infection_event)
     next_infection_event=NULL;
-  
+
   double time = e->execution_time;
   // (1) Calculate the individual infection rates of the herds, using the inter-herd transmission coefficients
   double ir_temp;
@@ -192,7 +192,7 @@ void Farm::infection_rate_has_changed( Event * e ){ //e points to the event by w
 	  infection_rates[h_to] = 0;
 	  continue;
 	}
-	
+
       ir_temp  = 0;
       ir_temp += bvd_const::lambda_TI * h_to->getNumTI() / h_to->total_number();
       ir_temp += bvd_const::lambda_PI * h_to->getNumPI() / h_to->total_number();
@@ -204,7 +204,7 @@ void Farm::infection_rate_has_changed( Event * e ){ //e points to the event by w
       ir_temp *= h_to->getNumS();
       infection_rates[ h_to ] = ir_temp;
     }
-  
+
   // (2) Calculate the times of the next infection for each herd according to these rates
   // (3) Take the earliest of these times and the pertaining herd
   Herd*  infection_herd=NULL;
@@ -212,17 +212,17 @@ void Farm::infection_rate_has_changed( Event * e ){ //e points to the event by w
   for ( auto const h_to : my_herds )
     {
       // Calculate the (absolute) time at which an infection in a herd would happen at this herd's rate.
-      ir_temp = time + system->rng.time_of_next_infection( infection_rates[h_to] ); 
+      ir_temp = time + system->rng.time_of_next_infection( infection_rates[h_to] );
       if ( ir_temp < infection_time )
 	{
 	  infection_time = ir_temp;
 	  infection_herd = h_to;
 	}
     }
-  
+
   // (4) Check if there is an infection rate change before in any of the herds.
   double next_irc = next_infection_rate_change( e );
-  if ( next_irc < infection_time ) 
+  if ( next_irc < infection_time )
     {  // (5a) If yes, do nothing , STOP!
       return;
     }
@@ -232,7 +232,7 @@ void Farm::infection_rate_has_changed( Event * e ){ //e points to the event by w
     // Moreover, next_irc==infection_time and thus the above condition does not hold.
     return;
   else
-    {  
+    {
 		if(next_infection_event != NULL){//if there is already a present infection event
 			//std::cerr << "Trying to schedule a new infection even though there is already a present infection rate event" << std::endl;
 			if(next_infection_event->execution_time > infection_time){//and it happens later then the new one, abort it
@@ -240,16 +240,16 @@ void Farm::infection_rate_has_changed( Event * e ){ //e points to the event by w
 			}else{//or just don't schedule a new event
 				return;
 			}
-		  
+
 		}
-	     
-      
-	    // (5b) If not, draw an S cow randomly from this herd 
+
+
+	    // (5b) If not, draw an S cow randomly from this herd
       Cow* infection_victim = infection_herd->random_S_cow();
-      
+
       // (6) Schedule INFECTION event.
      system->schedule_event( new Event( infection_time , Event_Type::INFECTION , infection_victim->id() ) );
-  
+
     }
 }
 
@@ -268,7 +268,7 @@ void Farm::execute_event( Event *e )
       std::cerr << "Aborting." <<std::endl;
       exit(1);
     }
-    
+
 }
 
 void Farm::execute_TRADE_event( Event* e )
@@ -278,7 +278,7 @@ void Farm::execute_TRADE_event( Event* e )
   Cow* c = Cow::get_address( e->id );
   if ( c == NULL ) //Dead cows are not traded. Only dead parrots are.
     return;
-  
+
   Farm* source;
   	if (c->herd != NULL)
    		source = c->herd->farm;
@@ -293,7 +293,7 @@ void Farm::execute_TRADE_event( Event* e )
 		std::cout << e << std::endl;
       exit(1);
     }
-	
+
   // The pull_cow and push_cow methods ensure that the number or S,TI,PI and R in both farms are correct,
   //  the list of susceptible cows are up to date and the cows get the pointer to the right herd..
   if(source != NULL){
@@ -302,21 +302,21 @@ void Farm::execute_TRADE_event( Event* e )
   	source->infection_rate_has_changed( e );
   }
   push_cow( c );
-	
+
   // If there is an infection event in either of the farms (which can happen if the trade has been scheduled after the infection has been scheduled)
   // This infection event has to be invalidated because a trade is an infection rate changing event (for both farms) and there should never be an infection event
   // after an infection rate changing event in the queue.
-  
-  
+
+
   this->invalidate_next_infection_event();
 
-  
+
   for ( auto c_e : c->future_irc_events_that_move )
     future_infection_rate_changing_events.push( c_e );
 
-  
+
   this->infection_rate_has_changed( e );
-  
+
 }
 
 //void Farm::get_state( std::array< int , 4 > * input )
@@ -364,14 +364,14 @@ void Farm::executeQuarantineEndEvent(const Event* e){
 	}
 }
 
-void Farm::jungtierCheck(){//This thing is so quick and dirty that even your mum feels clean 
+void Farm::jungtierCheck(){//This thing is so quick and dirty that even your mum feels clean
 	if(this->myType == SLAUGHTERHOUSE || this->myType == WELL) return;
 	//TODO verallgemeinern des Testmechanismus auf beliebig viele Herden
 	int num = this->getNumberOfCowsToTest();
 	bool onePositiveTest = false;
 	for (auto cow : this->my_herds[0]->getNUnknownCows(num)){
 		Event * e= new Event(this->system->getCurrentTime(), Event_Type::JUNGTIER_SMALL_GROUP, cow->id());
-		
+
 		if(cow->isTestedPositive(e)){
 			onePositiveTest = true;
 			break;
@@ -397,6 +397,6 @@ int Farm::getNumberOfCowsToTest() const{
 	else if(N < 30 && N > 20) n = 11;
 	else if(N < 20 && N > 10) n = 10;
 	else n = 8;
-	
+
 	return n;
 }
