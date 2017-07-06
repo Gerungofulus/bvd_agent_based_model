@@ -4,6 +4,7 @@
 #include "FileHandler.h"
 #include "BVDSettings.h"
 #include <map>
+#include <cmath>
 class Trade_Event;
 class Event;
 class Cow;
