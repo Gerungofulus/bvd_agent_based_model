@@ -19,7 +19,7 @@ lib/*
 *.o
 bvd_agent_simulation
 *dSYM
-
+*.pyc
 
 
 #OS specific
