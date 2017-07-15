@@ -267,11 +267,11 @@ bool Market::doTheTrading(Cow* cow, Demand* d){
 		#ifdef _MARKET_DEBUG_
 			std::cout << "Market: schedule new trade" << std::endl;
 		#endif
-		(d->numberOfDemandedCows)--;
+
 	}else{
 		delete e;
 	}
-
+	(d->numberOfDemandedCows)--;
 	return ret;
 }
 bool Market::scheduleTrade(Trade_Event* event){
