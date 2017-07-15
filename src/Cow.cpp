@@ -114,7 +114,7 @@ void Cow::execute_event( Event* e )
 {
 	Farm * f = herd->farm;  // We have to store this at this place, because after executing an eventual DEATH event, the cow is already deleted..
 	future_irc_events_that_move.erase((Event*)e); // Same reason for doing this here.
-  if(this->myType == SLAUGHTERHOUSE && ( e->type != Event_Type::SLAUGHTER || e->type != Event_Type::SLAUGHTER || e->type != Event_Type::SLAUGHTER)){ return }
+  if(f->myType == SLAUGHTERHOUSE && !( e->type == Event_Type::SLAUGHTER || e->type == Event_Type::SLAUGHTER || e->type == Event_Type::SLAUGHTER)){ return; }
 	switch ( e->type )
 	{
 		case Event_Type::VACCINATE		:
@@ -522,7 +522,7 @@ inline void Cow::execute_END_OF_VACCINATION(const double& time){
 		this->end_of_vaccination_event = nullptr;
 
 }
-inline void Cow::scheduleVaccination(const double& time){
+inline void Cow::scheduleVaccination(const double& time) const{
 	double vaccTime = time;
 	if(time - this->birth_time - bvd_const::firstVaccAge < 0 )
 		vaccTime = this->birth_time + bvd_const::firstVaccAge + 1;
@@ -629,8 +629,8 @@ inline void Cow::scheduleNextTest(){
     //see if the vaccination will take place within the time till the vaccinationTimeBeforeInsemination before the insemination else invalidate it and schedule a new one
     //till now it's sufficient to check if the approximate end of the vaccination is in the given time frame
     if(c->end_of_vaccination_event != nullptr){//TODO if distributions for the time of a working vaccination are introduced, another test to check if a cow has been vaccinated before needs to be introduced
-        diff = c->end_of_vaccination_event->execution_time - vaccTime; // this needs to be bigger than 0 and smaller than vaccinationTimeBeforeInsemination
-        if(diff >= 0.0 && diff <= activeStrategy->vaccinationTimeBeforeInsemination){//vaccination is happening in the desired time frame
+        const double diff = c->end_of_vaccination_event->execution_time - vaccTime; // this needs to be bigger than 0 and smaller than vaccinationTimeBeforeInsemination
+        if(diff >= 0.0 && diff <= System::getInstance(nullptr)->activeStrategy->vaccinationTimeBeforeInsemination){//vaccination is happening in the desired time frame
           //leave everything
           return;
         }
