@@ -106,7 +106,6 @@ void HDF5FileHandler::writeTestData(const hid_t& file_id){
 
 
 	if(this->testStorage->size() > 0){
-		std::cout << "trying to write test data" << std::endl;
 		const int rank = 2;
 		hsize_t dims[rank] = { static_cast<hsize_t>(this->testStorage->size()), static_cast<hsize_t>(TestDataPoint::size) };
 
