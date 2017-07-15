@@ -621,8 +621,6 @@ inline void Cow::scheduleNextTest(){
 	if(system->activeStrategy->usesVaccination){//vaccination
 
 		vaccTime = time - System::getInstance(nullptr)->activeStrategy->vaccinationTimeBeforeInsemination;
-    std::cout << "before" << std::endl;
-    std::cout << vaccTime << "\t" << System::getInstance(nullptr)->getCurrentTime()<< "\t" << vaccTime-c->birth_time << std::endl;
 
     //cow has been vaccinated before
 
