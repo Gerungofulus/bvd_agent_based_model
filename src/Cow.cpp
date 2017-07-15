@@ -114,7 +114,7 @@ void Cow::execute_event( Event* e )
 {
 	Farm * f = herd->farm;  // We have to store this at this place, because after executing an eventual DEATH event, the cow is already deleted..
 	future_irc_events_that_move.erase((Event*)e); // Same reason for doing this here.
-
+  if(this->myType == SLAUGHTERHOUSE && ( e->type != Event_Type::SLAUGHTER || e->type != Event_Type::SLAUGHTER || e->type != Event_Type::SLAUGHTER)){ return }
 	switch ( e->type )
 	{
 		case Event_Type::VACCINATE		:
@@ -519,15 +519,14 @@ inline void Cow::execute_END_OF_VACCINATION(const double& time){
 	if(this->infection_status == Infection_Status::IMMUNE){
 		this->execute_END_OF_MA(time);
 	}
-		this->end_of_vaccination_event = NULL;
+		this->end_of_vaccination_event = nullptr;
 
 }
 inline void Cow::scheduleVaccination(const double& time){
-	double vaccTime = 0.0;
-	if(this->age() < bvd_const::firstVaccAge )
+	double vaccTime = time;
+	if(time - this->birth_time - bvd_const::firstVaccAge < 0 )
 		vaccTime = this->birth_time + bvd_const::firstVaccAge + 1;
-	else
-		vaccTime = time + bvd_const::timeOfVaccinationPersistance;
+
 
 	system->schedule_event( new Event( vaccTime, Event_Type::VACCINATE, this->id() ) );
 }
@@ -538,20 +537,16 @@ inline void Cow::runVaccination(const double& time){
 		this->herd->remove_cow_from_susceptible( this );
 
 		this->herd->add_r_cow(this);
-		vaccinationWorked = true;
 //		if(this->herd->farm->next_infection_event != nullptr && this->herd->farm->next_infection_event->id == this->id() && this->herd->farm->next_infection_event->execution_time < time + bvd_const::timeOfVaccinationPersistance)
 //			this->herd->farm->invalidate_next_infection_event();
-	}
-	if(this->end_of_vaccination_event != nullptr){
-		system->invalidate_event(this->end_of_vaccination_event);
-
-		this->end_of_vaccination_event = nullptr;
-	}
-	if(vaccinationWorked){
-		this->end_of_vaccination_event = new Event( system->getCurrentTime()+ System::getInstance(nullptr)->activeStrategy->vaccinationTimeOfDefense  , Event_Type::END_OF_VACCINATION      , this->id() );
+    if(this->end_of_vaccination_event != nullptr){
+      system->invalidate_event(this->end_of_vaccination_event);
+      this->end_of_vaccination_event = nullptr;
+    }
+    this->end_of_vaccination_event = new Event( system->getCurrentTime()+ System::getInstance(nullptr)->activeStrategy->vaccinationTimeOfDefense  , Event_Type::END_OF_VACCINATION      , this->id() );
 		system->schedule_event(this->end_of_vaccination_event) ;
 	}
-	this->scheduleVaccination(time);
+	this->scheduleVaccination(time + bvd_const::timeOfVaccinationPersistance);
 	this->numberOfVaccinations++;
 }
 bool Cow::testCow(const Event* e){
@@ -623,15 +618,28 @@ inline void Cow::scheduleNextTest(){
 	if(c == nullptr)
 		c = this;
 	system->schedule_event( new Event( time , Event_Type::INSEMINATION, c->id() ) );
-	if(system->activeStrategy->usesVaccination){
+	if(system->activeStrategy->usesVaccination){//vaccination
 
 		vaccTime = time - System::getInstance(nullptr)->activeStrategy->vaccinationTimeBeforeInsemination;
+    std::cout << "before" << std::endl;
+    std::cout << vaccTime << "\t" << System::getInstance(nullptr)->getCurrentTime()<< "\t" << vaccTime-c->birth_time << std::endl;
 
-		if(this->end_of_vaccination_event == nullptr || this->end_of_vaccination_event->execution_time > vaccTime){
-			vaccTime = (vaccTime-System::getInstance(nullptr)->getCurrentTime()) < bvd_const::firstVaccAge ?  vaccTime : bvd_const::firstVaccAge + System::getInstance(nullptr)->getCurrentTime();
-			system->schedule_event( new Event( vaccTime, Event_Type::VACCINATE, c->id() ) );
+    //cow has been vaccinated before
 
-		}
+    //see if the vaccination will take place within the time till the vaccinationTimeBeforeInsemination before the insemination else invalidate it and schedule a new one
+    //till now it's sufficient to check if the approximate end of the vaccination is in the given time frame
+    if(c->end_of_vaccination_event != nullptr){//TODO if distributions for the time of a working vaccination are introduced, another test to check if a cow has been vaccinated before needs to be introduced
+        diff = c->end_of_vaccination_event->execution_time - vaccTime; // this needs to be bigger than 0 and smaller than vaccinationTimeBeforeInsemination
+        if(diff >= 0.0 && diff <= activeStrategy->vaccinationTimeBeforeInsemination){//vaccination is happening in the desired time frame
+          //leave everything
+          return;
+        }
+    }else{
+      //the cow has not been vaccinated before and will therefore get a vaccination at the right time
+      //no need to change the time above
+
+    }
+    c->scheduleVaccination(vaccTime);
 	}
 
 }
