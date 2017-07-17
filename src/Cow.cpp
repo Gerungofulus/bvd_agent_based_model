@@ -531,8 +531,7 @@ inline void Cow::scheduleVaccination(const double& time) const{
 	system->schedule_event( new Event( vaccTime, Event_Type::VACCINATE, this->id() ) );
 }
 inline void Cow::runVaccination(const double& time){
-	bool vaccinationWorked = false;
-	if( this->infection_status == Infection_Status::SUSCEPTIBLE){
+	if( this->infection_status == Infection_Status::SUSCEPTIBLE && system->rng.vaccinationWorks()){
 		this->infection_status = Infection_Status::IMMUNE;
 		this->herd->remove_cow_from_susceptible( this );
 
