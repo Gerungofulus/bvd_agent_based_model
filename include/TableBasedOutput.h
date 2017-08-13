@@ -87,6 +87,17 @@ struct InfectionResultDataPoint: public DataPoint<int>{
 	operator int*();
 	static const int size;
 };
+
+struct VaccinationDataPoint: public DataPoint<int>{
+	int id;
+	int time;
+	int age;
+	int sex;
+	double operator[] (int i);
+	operator double*();
+	operator const double*();
+	static const int size;
+}
 struct intermediateCalvingTimePoint: public DataPoint<double>{
 	double id;
 	double intermediateCalvingTime;
@@ -122,14 +133,14 @@ protected:
     typedef std::vector<TestDataPoint> TestDataSave;
     typedef std::vector<intermediateCalvingTimePoint> intermediateCalvingTimeSave;
     typedef std::vector<InfectionResultDataPoint> infectionResultDataSave;
-
+		typedef std::vector<VaccinationDataPoint> VaccinationDataSave;
 
 
     void logTrade(const Trade_Event* event);
     void logDyingCow(const Event* event,const Cow* cow);
     void logInfection(const Event* event,const Cow* cow,const bool didLooseCalf=false);
     void logInfectionRateChangeEvent(const Event* event);
-
+		void logVaccination(const Event* event,const Cow* cow);
     TestDataPoint testEventToDataPoint(const Event*, const Cow* c);
     CowDataPoint createCowDataPointForCow(const Event* event,const Cow* cow);
     void createIntermediateCalvingTimePoints(Cow*c);
@@ -169,7 +180,7 @@ protected:
     CowDataSaveStorage* piStorage;
     TestDataSave* testStorage;
     infectionResultDataSave *infectionResultSave;
-
+		VaccinationDataSave *vaccDataSave;
     int farmNum;
 
     fileMode mode;

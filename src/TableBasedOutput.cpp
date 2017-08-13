@@ -23,6 +23,7 @@ TableBasedOutput::TableBasedOutput(){
 	this->InfectionData = new CowDataSave();
 	this->PIDeathSave = new CowDataSave();
 	this->piStorage = new CowDataSaveStorage();
+	this->vaccDataSave = new VaccinationDataSave()
 	this->farmNum = 0;
 
 	this->setPath();
@@ -49,6 +50,7 @@ TableBasedOutput::~TableBasedOutput(){
 	delete this->piStorage;
 	delete this->testStorage;
 	delete this->infectionResultSave;
+	delete this->vaccDataSave;
 }
 #pragma mark -
 #pragma mark Logging functions
@@ -121,7 +123,10 @@ void TableBasedOutput::logEvent(const Event *e){
 
 				break;
 				case Event_Type::INFECTION:
-					this->logInfection(e, c);
+					this->logInfection(e, c
+						beak;
+				case Event_Type::VACCINATION:
+					this->logVaccination(e,c);
 				break;
 				default: break;
 
@@ -140,6 +145,18 @@ void TableBasedOutput::logResultingEventOfInfection(const Event* e){
 	this->infectionResultSave->push_back(p);
 
 }
+
+void TableBasedOutput::logResultingEventOfInfection(const Event* e){
+	Cow *c = Cow::get_address(e->id,const Cow* c);
+	VaccinationDataPoint p{};// = {c->id(), (int) e->type , (int) c->calf_status};
+	p.id = c->id();
+	p.age = (int)e->age();
+	p.sex = (int)c->female;
+	p.time = (int)e->execution_time;
+	this->infectionResultSave->push_back(p);
+
+}
+
 
 inline void TableBasedOutput::logTest(const Event *e, const Cow* c){
 
@@ -294,6 +311,7 @@ void TableBasedOutput::flushStorages(){
 	this->clearMySave(this->testStorage);
 	this->clearMySave(this->infectionResultSave);
 	this->clearMyStorage(this->piStorage);
+	this->clearMySave(this->vaccDataSave);
 }
 
 template<typename T>
@@ -437,6 +455,39 @@ InfectionResultDataPoint::operator int*(){
 
 	int *dat = new int[InfectionResultDataPoint::size];
 	for(int i=0; i< InfectionResultDataPoint::size; i++){
+		dat[i] = (*this)[i];
+
+	}
+
+	return dat;
+}
+int VaccinationDataPoint::operator[] (int i){
+	int retVal = -1;
+	switch(i){
+		case 0:
+			retVal = this->id;
+			break;
+		case 1:
+			retVal = this->time;
+			break;
+		case 2:
+			retVal = this->age;
+			break;
+		case 3:
+			retVal = this->sex;
+			break;
+		default:
+			std::cerr << "Error: Asked infection result data point for index " << i << std::endl;
+			break;
+
+	}
+	return retVal;
+}
+const int VaccinationDataPoint::size = ;
+VaccinationDataPoint::operator int*(){
+
+	int *dat = new int[VaccinationDataPoint::size];
+	for(int i=0; i< VaccinationDataPoint::size; i++){
 		dat[i] = (*this)[i];
 
 	}
