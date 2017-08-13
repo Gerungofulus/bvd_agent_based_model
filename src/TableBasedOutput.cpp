@@ -7,6 +7,7 @@
 const std::string TableBasedOutput::intermediateCalvingTimeTableName = "BVD_intermediate_calving_times";
 const std::string TableBasedOutput::infectionResultTabelName = "BVD_INFECTION_RESULTS";
 const std::string TableBasedOutput::testsTableName = "BVD_Tests";
+const std::string TableBasedOutput::vaccinationsTableName = "BVD_Vaccinations";
 
 // const std::map<const std::string, std::vector<Data>*> TableBasedOutput::saveMap = {
 // 	{TableBasedOutput::intermediateCalvingTimeTableName,this->intermediateCalvingTimes},
@@ -23,7 +24,7 @@ TableBasedOutput::TableBasedOutput(){
 	this->InfectionData = new CowDataSave();
 	this->PIDeathSave = new CowDataSave();
 	this->piStorage = new CowDataSaveStorage();
-	this->vaccDataSave = new VaccinationDataSave()
+	this->vaccDataSave = new VaccinationDataSave();
 	this->farmNum = 0;
 
 	this->setPath();
@@ -123,9 +124,9 @@ void TableBasedOutput::logEvent(const Event *e){
 
 				break;
 				case Event_Type::INFECTION:
-					this->logInfection(e, c
-						beak;
-				case Event_Type::VACCINATION:
+					this->logInfection(e, c);
+						break;
+				case Event_Type::VACCINATE:
 					this->logVaccination(e,c);
 				break;
 				default: break;
@@ -146,14 +147,13 @@ void TableBasedOutput::logResultingEventOfInfection(const Event* e){
 
 }
 
-void TableBasedOutput::logResultingEventOfInfection(const Event* e){
-	Cow *c = Cow::get_address(e->id,const Cow* c);
+void TableBasedOutput::logVaccination(const Event* e, const Cow* c){
 	VaccinationDataPoint p{};// = {c->id(), (int) e->type , (int) c->calf_status};
 	p.id = c->id();
-	p.age = (int)e->age();
+	p.age = (int)c->age();
 	p.sex = (int)c->female;
 	p.time = (int)e->execution_time;
-	this->infectionResultSave->push_back(p);
+	this->vaccDataSave->push_back(p);
 
 }
 
@@ -483,7 +483,7 @@ int VaccinationDataPoint::operator[] (int i){
 	}
 	return retVal;
 }
-const int VaccinationDataPoint::size = ;
+const int VaccinationDataPoint::size = 4;
 VaccinationDataPoint::operator int*(){
 
 	int *dat = new int[VaccinationDataPoint::size];

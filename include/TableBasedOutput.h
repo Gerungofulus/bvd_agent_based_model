@@ -93,11 +93,11 @@ struct VaccinationDataPoint: public DataPoint<int>{
 	int time;
 	int age;
 	int sex;
-	double operator[] (int i);
-	operator double*();
-	operator const double*();
+	int operator[] (int i);
+	operator int*();
+	operator const int*();
 	static const int size;
-}
+};
 struct intermediateCalvingTimePoint: public DataPoint<double>{
 	double id;
 	double intermediateCalvingTime;
@@ -168,6 +168,7 @@ protected:
 	static const std::string intermediateCalvingTimeTableName;
 	static const std::string infectionResultTabelName;
 	static const std::string testsTableName;
+	static const std::string vaccinationsTableName;
 
 
     std::vector<double>* farmDataTimes;
