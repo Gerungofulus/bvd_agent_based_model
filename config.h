@@ -5,16 +5,16 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the `gsl' library (-lgsl). */
-/* #undef HAVE_LIBGSL */
+#define HAVE_LIBGSL 1
 
 /* Define to 1 if you have the `gslcblas' library (-lgslcblas). */
 #define HAVE_LIBGSLCBLAS 1
 
 /* Define to 1 if you have the `hdf5' library (-lhdf5). */
-/* #undef HAVE_LIBHDF5 */
+#define HAVE_LIBHDF5 1
 
 /* Define to 1 if you have the `hdf5_hl' library (-lhdf5_hl). */
-/* #undef HAVE_LIBHDF5_HL */
+#define HAVE_LIBHDF5_HL 1
 
 /* Define to 1 if you have the `m' library (-lm). */
 #define HAVE_LIBM 1
