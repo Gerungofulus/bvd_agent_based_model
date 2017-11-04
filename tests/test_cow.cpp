@@ -8,8 +8,15 @@
 // using namespace std;
 
 #include "projectImports/Catch/catch.hpp"
+#include "projectImports/FakeIt/fakeit.hpp"
 #include "Cow.h"
+#include "System.h"
+#include "BVD_Random_Number_Generator.h"
 TEST_CASE("Cows can be created", "[Cow]"){
+  Mock<System> systemMock;
+  Mock<BVD_Random_Number_Generator> rndMock;
+  systemMock.get().rng = rndMock.get();
+  Cow::set_system(systemMock.get());
   Cow *erna = new Cow( 0.0 , nullptr );
 }
 //
