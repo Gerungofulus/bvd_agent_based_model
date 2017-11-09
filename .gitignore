@@ -24,3 +24,6 @@ bvd_agent_simulation
 
 #OS specific
 *.DS_STORE
+
+#test output
+output_

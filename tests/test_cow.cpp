@@ -6,7 +6,7 @@
 // #include "Cow.h"
 // #include "Events.h"
 // using namespace std;
-
+#include <iostream>
 #include "projectImports/Catch/catch.hpp"
 #include "projectImports/FakeIt/fakeit.hpp"
 #include "Cow.h"
@@ -18,7 +18,7 @@
 using namespace fakeit;
 TEST_CASE("Cows can be created", "[Cow]"){
   //Set up a system with a single cow in a single farm
-  INIReader reader("../iniFiles/unitTestCow");
+  std::cout << reader.ParseError() << std::endl;
   System * s = System::getInstance(&reader);
   Farm* f = new Simple_One_Herd_Farm(s);
   f->holdSize();
