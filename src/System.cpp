@@ -469,8 +469,11 @@ System::CGuard::~CGuard(){
 	}
 }
 
-
-
 void System::addCow(Cow* c){
 	this->output->logBirth(c);
+}
+
+//Testing
+Event_queue System::getEventQueue(){
+	return this->queue;
 }

@@ -69,7 +69,7 @@ tests: $(OBJECTS) $(CUSTOMLIBS) $(TESTOBJECTS)
 	$(RM) $(BUILDDIR)/programm.o; #dirty hack
 	@echo "$(CLEANOBJS)";
 	@echo " $(CC) $^ -o $(TESTTARGET) $(LFLAGS) $(LD_INCLUDE)"; $(CC) $^ -o $(TESTTARGET) $(LFLAGS) $(LD_INCLUDE)
-
+	./build/test_executable
 
 clean:
 	@echo " Cleaning...";

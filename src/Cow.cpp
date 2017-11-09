@@ -617,7 +617,8 @@ inline void Cow::scheduleNextTest(){
 	if(c == nullptr)
 		c = this;
 	system->schedule_event( new Event( time , Event_Type::INSEMINATION, c->id() ) );
-	if(system->activeStrategy->usesVaccination){//vaccination
+std::cout << "vaccination enabled: "<< system->activeStrategy->usesVaccination << std::endl; 
+  if(system->activeStrategy->usesVaccination){//vaccination
 
 		vaccTime = time - System::getInstance(nullptr)->activeStrategy->vaccinationTimeBeforeInsemination;
 
