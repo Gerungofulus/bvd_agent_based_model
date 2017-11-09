@@ -18,7 +18,7 @@
 using namespace fakeit;
 TEST_CASE("Cows can be created", "[Cow]"){
   //Set up a system with a single cow in a single farm
-  std::cout << reader.ParseError() << std::endl;
+  INIReader reader("./iniFiles/unitTestCow.ini");
   System * s = System::getInstance(&reader);
   Farm* f = new Simple_One_Herd_Farm(s);
   f->holdSize();
