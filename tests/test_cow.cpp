@@ -15,6 +15,7 @@
 #include "Farm.h"
 #include "Simple_One_Herd_Farm.h"
 #include "Events.h"
+#include "BVD_Random_Number_Generator.h"
 using namespace fakeit;
 TEST_CASE("Cows can be created", "[Cow]"){
   //Set up a system with a single cow in a single farm
@@ -23,12 +24,17 @@ TEST_CASE("Cows can be created", "[Cow]"){
   Farm* f = new Simple_One_Herd_Farm(s);
   f->holdSize();
   Cow::set_system(s);
-  Cow *erna = new Cow( 0.0 , nullptr, true );
-  f->push_cow(erna);
-
+  Cow *erna;
+  //We mock the random number generator to make sure it returns predictable results
+  Mock<Random_Number_Generator> fakeRNG((s->rng));
+  //make sure every calf is female
+  When(Method(fakeRNG, is_calf_female)).AlwaysReturn(true);
+  //make sure every vaccination works
+  When(Method(fakeRNG, vaccinationWorks)).AlwaysReturn(true);
   SECTION("Waiting for the end of MA before vaccinating for the first time"){
     //set up the mother just about to give birth to a calf
-
+    erna = new Cow( 0.0 , nullptr, true );
+    f->push_cow(erna);
     erna->calf_status = Calf_Status::SUSCEPTIBLE;
     //let the mother give birth to a calve at day 500
     s->run_until(499);
@@ -38,18 +44,45 @@ TEST_CASE("Cows can be created", "[Cow]"){
     //born at day 500 erna's calve will get out of MA around day 680 so make sure
     //that the vaccination event scheduled is happening after that time
     Event_queue q = s->getEventQueue();
-    s->dump_queue();
     while (!q.empty()){//iterate over all events in that queue
       Event* e = q.top();
       if (e->type == Event_Type::VACCINATE && e->id == 1){//check for the calf, it the first insemination is scheduled after the approximate end of its MA
         REQUIRE(e->execution_time > 680);
-        return;
+        // return;
       }
       q.pop();
     }
 
   }
-  SECTION("A successful insemination schedules of a vaccination end event and a new vaccination"){}
+  SECTION("A successful vaccination schedules a vaccination end event and a new vaccination and makes the cow IMMUNE"){
+
+    //since System is a singleton, it will persist the state after the first section so we have to start a day later
+    //schedule the vaccination
+    Event *vacc = new Event( 500 , Event_Type::VACCINATE , erna->id() );
+    s->schedule_event(vacc);
+    // run until the vaccination is Done
+    s->run_until(501);
+    //make sure the cow is immune now
+    REQUIRE(erna->infection_status == Infection_Status::IMMUNE);
+    Event_queue q = s->getEventQueue();
+    //keep track of other events in there
+    int numberOfVaccinationEndEvents = 0;
+    int numberOfVaccinationEvents = 0;
+    while (!q.empty()){//iterate over all events in that queue
+      Event* e = q.top();
+      if (e->type == Event_Type::END_OF_VACCINATION && e->id == 2){//check if a vaccination end has been scheduled: the entry should be exactly one
+        numberOfVaccinationEndEvents++;
+      }
+      if (e->type == Event_Type::VACCINATE && e->id == 2){//check if a new vaccination event has been scheduled
+        numberOfVaccinationEvents++;
+      }
+      q.pop();
+    }
+    //naje sure there is exactly one of each
+    REQUIRE(numberOfVaccinationEvents == 1);
+    REQUIRE(numberOfVaccinationEndEvents == 1);
+
+  }
   SECTION("If the vaccination failed a new vaccination get scheduled a year later"){}
   SECTION("On schedule of a new insemination: Vaccinate a cow 40 days before insemination if it hasn't been vaccinated before."){}
   SECTION("On schedule of a new insemination: If the cow has been vaccinated in the last 200 days, do nothing"){}
