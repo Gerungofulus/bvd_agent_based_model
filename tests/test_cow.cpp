@@ -41,8 +41,8 @@ TEST_CASE("Cows can be created", "[Cow]"){
     s->dump_queue();
     while (!q.empty()){//iterate over all events in that queue
       Event* e = q.top();
-      if (e->type == Event_Type::VACCINATE){
-        REQUIRE(e->execution_time > 570);
+      if (e->type == Event_Type::VACCINATE && e->id == 1){//check for the calf, it the first insemination is scheduled after the approximate end of its MA
+        REQUIRE(e->execution_time > 680);
         return;
       }
       q.pop();
