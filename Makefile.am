@@ -15,6 +15,8 @@ CCC = g++
 ifeq ($(DISTRO),Debian)#Debian detection for serial hdf5
 LDINCLUDE := $(LDINCLUDE) -L/usr/lib/x86_64-linux-gnu/serial -L/usr/lib -L/usr/lib/x86_64-linux-gnu/
 LFLAGS := $(LFLAGS) -lhdf5_serial -lhdf5_serial_hl # for some reason or Linux systems required these library names in order to work as expected
+else
+LFLAGS := $(LFLAGS) -lhdf5 -lhdf5_hl
 endif
 endif
 SRCDIR := src
