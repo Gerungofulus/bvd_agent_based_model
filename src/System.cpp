@@ -60,9 +60,9 @@ System::System(double start_time , double dt_log , double dt_write, double dt_ma
 	queue        = Event_queue();
 	unsigned int seed = System::reader->GetInteger("rng", "seed", -1);
 	if(seed != -1){
-		rng = Random_Number_Generator( seed );
+		rng = new Random_Number_Generator( seed );
 	}else{
-		rng = Random_Number_Generator(  );
+		rng = new Random_Number_Generator(  );
 	}
 
 	set_log_interval(dt_log);
@@ -84,7 +84,7 @@ System::~System()
   std::cout << "Instance of system is going to be deleted. Stats: " << no_of_events_processed ;
   std::cout << " events processed, " << Cow::total_number();
   std::cout << " cows went through the system." << std::endl;
-  std::cout << "seed: " << this->rng.getSeed() << std::endl;
+  std::cout << "seed: " << this->rng->getSeed() << std::endl;
   delete market;
   for(auto farm: this->farms)
   	delete farm;

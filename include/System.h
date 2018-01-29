@@ -58,7 +58,7 @@ class System
 
   	AdvancedOutput *output;
 	BVDContainmentStrategy* activeStrategy;
-  	Random_Number_Generator rng;
+  	Random_Number_Generator* rng;
 	double getCurrentTime();
 	Market* getMarket();
 	static INIReader* reader;

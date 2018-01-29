@@ -144,7 +144,7 @@ void Initializer::set_number_of_farms( int N )
     {
       age_distr.push_back( def_age_distr );
       no_animal.push_back( -1 );
-      if(s->rng.ran_unif_double( 1.0, 0.0) <= this->percentageOfPreviouslyInfected){
+      if(s->rng->ran_unif_double( 1.0, 0.0) <= this->percentageOfPreviouslyInfected){
 	      initialTypes.push_back(FarmInitialConditionsType::previouslyInfected);
       }else{
 	      initialTypes.push_back(FarmInitialConditionsType::clean);
@@ -237,7 +237,7 @@ void Initializer::initialize_random_farm( Farm* farm , int farm_idx )
     if ( number <= 0  )
       {
 	
-	number = (int)pow(10,s->rng.ran_unif_double( hi , lo ));
+	number = (int)pow(10,s->rng->ran_unif_double( hi , lo ));
       }
   //For each animal
 
@@ -268,7 +268,7 @@ Cow* Initializer::createCow(const int& farm_idx, int& i, const int& number, Farm
 	mod= age_distr.at(farm_idx).mod;
 	System* s = System::getInstance(NULL);
 	if(age <=0 )
-		age = s->rng.ran_triangular_double( lo, hi, mod );
+		age = s->rng->ran_triangular_double( lo, hi, mod );
 
 	//(3) create cow
 	Cow* c = new Cow( (time-age) ,mother );
@@ -307,7 +307,7 @@ inline void Initializer::scheduleFutureEventsForCow(Cow* c, Farm* farm, const in
 	Event_Type et;
 	double t;
 	System* s = System::getInstance(NULL);
-	double insem_age = s->rng.first_insemination_age();
+	double insem_age = s->rng->first_insemination_age();
 	double age = c->age();
 	double timeForCalving = age - insem_age ;
 	double calftime = insem_age;
@@ -315,7 +315,7 @@ inline void Initializer::scheduleFutureEventsForCow(Cow* c, Farm* farm, const in
 	Cow* calf = nullptr;	
 	if ( timeForCalving >= 0 )
 	  {
-	     calvings_so_far = (timeForCalving) / ( s->rng.duration_of_pregnancy() + s->rng.time_of_rest_after_calving(c->calving_number) ) ;
+	     calvings_so_far = (timeForCalving) / ( s->rng->duration_of_pregnancy() + s->rng->time_of_rest_after_calving(c->calving_number) ) ;
 //	    calvings_so_far = calvings_so_far > c->calving_number ? c->calving_number : calvings_so_far;
 //	    
 //	 	for(int kalb = 0; kalb < calvings_so_far; kalb++){
@@ -323,10 +323,10 @@ inline void Initializer::scheduleFutureEventsForCow(Cow* c, Farm* farm, const in
 //		 	if(i >= number) break;
 //		 	bool conception;
 //		 	
-//		 	calftime += s->rng.insemination_result( !kalb , &conception) + s->rng.duration_of_pregnancy() + s->rng.time_of_rest_after_calving(c->calving_number) ;
+//		 	calftime += s->rng->insemination_result( !kalb , &conception) + s->rng->duration_of_pregnancy() + s->rng->time_of_rest_after_calving(c->calving_number) ;
 //		 	std::cout << kalb << " " << calftime << std::endl;
 //		 	if(kalb)
-//		 		calftime += s->rng.time_of_rest_after_calving(c->calving_number);
+//		 		calftime += s->rng->time_of_rest_after_calving(c->calving_number);
 //		 	else{
 //		 		calftime = c->birth_time + calftime;
 //		 		}
@@ -354,14 +354,14 @@ inline void Initializer::scheduleFutureEventsForCow(Cow* c, Farm* farm, const in
 //	 	}
 	 	double timeOfLastInsemination = time -1.0;
 	 	if(calf != NULL)
-		 	timeOfLastInsemination = time - (calf->age() - s->rng.time_of_rest_after_calving(c->calving_number)	);
+		 	timeOfLastInsemination = time - (calf->age() - s->rng->time_of_rest_after_calving(c->calving_number)	);
 
 	 	if(timeOfLastInsemination <= time){
 	 		et = Event_Type::BIRTH;
 	 		switch( c->infection_status )
 			{	
 				case Infection_Status::TRANSIENTLY_INFECTED:
-				  c->calf_status = s->rng.calf_outcome_from_infection ( 0 );
+				  c->calf_status = s->rng->calf_outcome_from_infection ( 0 );
 				  break;
 				case Infection_Status::PERSISTENTLY_INFECTED:
 				  c->calf_status = Calf_Status::PERSISTENTLY_INFECTED;          // p=1 for the birth of a PI calf by a PI mother.
@@ -370,7 +370,7 @@ inline void Initializer::scheduleFutureEventsForCow(Cow* c, Farm* farm, const in
 				  c->calf_status = Calf_Status::SUSCEPTIBLE; // Yes, SUSCEPTIBLE is right. An eventual immunity through MA is handled in the BIRTH routine.
 				  break;
 			}
-			t = timeOfLastInsemination + s->rng.duration_of_pregnancy();
+			t = timeOfLastInsemination + s->rng->duration_of_pregnancy();
 
 	 	}else{
 	 		et = Event_Type::INSEMINATION;
@@ -380,7 +380,7 @@ inline void Initializer::scheduleFutureEventsForCow(Cow* c, Farm* farm, const in
 	 	c->calving_number -= calvings_so_far;
 	    //(5) calculate next breeding event for this animal
 	    // type is either insemination or birth (neglecting all other possibilities).
-//	    et = ( s->rng.ran_unif_int(100) < 50 ) ? Event_Type::INSEMINATION : Event_Type::BIRTH;
+//	    et = ( s->rng->ran_unif_int(100) < 50 ) ? Event_Type::INSEMINATION : Event_Type::BIRTH;
 //	    if (et==Event_Type::BIRTH)
 //	      {
 //		if(i < (int) (no_PI.at(farm_idx) * number)){
@@ -388,11 +388,11 @@ inline void Initializer::scheduleFutureEventsForCow(Cow* c, Farm* farm, const in
 //		}else{
 //			c->calf_status = Calf_Status::SUSCEPTIBLE;
 //		}
-//		t = s->rng.ran_unif_double( bvd_const::pregnancy_duration.min , 1 );
+//		t = s->rng->ran_unif_double( bvd_const::pregnancy_duration.min , 1 );
 //	      }
 //	    else
 //	      {
-//		t = s->rng.time_of_rest_after_calving( c->calving_number );
+//		t = s->rng->time_of_rest_after_calving( c->calving_number );
 //	      }
 	  }
 	else

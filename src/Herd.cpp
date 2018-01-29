@@ -147,7 +147,7 @@ Cow* Herd::random_S_cow()
       std::cerr<<std::endl;
     }
     
-  int id = farm->system->rng.ran_unif_int( number_of_S );
+  int id = farm->system->rng->ran_unif_int( number_of_S );
   Cow* ran_cow = susceptible_cows [id];
   if(ran_cow->infection_status != Infection_Status::SUSCEPTIBLE){
 	  std::cerr << "the randomly chosen cow is not susceptible" << std::endl;
@@ -205,7 +205,7 @@ void Herd::getNRandomCowsFromGroup(int n,Cow_Trade_Criteria crit, Cow::Unordered
 		setOfCows->insert(group->begin(), group->end());
 	}
 	int * indices = new int[n];
-	this->farm->system->rng.getNRandomNumbersInRange(n,0,group->size(), indices);
+	this->farm->system->rng->getNRandomNumbersInRange(n,0,group->size(), indices);
 	#ifdef _HERD_DEBUG_
 		std::cout << "got a group of " << group->size() << "cows" << std::endl;
 	#endif

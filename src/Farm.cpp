@@ -212,7 +212,7 @@ void Farm::infection_rate_has_changed( Event * e ){ //e points to the event by w
   for ( auto const h_to : my_herds )
     {
       // Calculate the (absolute) time at which an infection in a herd would happen at this herd's rate.
-      ir_temp = time + system->rng.time_of_next_infection( infection_rates[h_to] );
+      ir_temp = time + system->rng->time_of_next_infection( infection_rates[h_to] );
       if ( ir_temp < infection_time )
 	{
 	  infection_time = ir_temp;

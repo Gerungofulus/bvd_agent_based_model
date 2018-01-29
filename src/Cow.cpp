@@ -42,7 +42,7 @@ int   Cow::id() const { return _id; }
 Cow::Cow( double time , Cow* my_mother )
 {
 
-	init(time, my_mother,  system->rng.is_calf_female());
+	init(time, my_mother,  system->rng->is_calf_female());
 }
 Cow::Cow( double time, Cow* my_mother, bool isFemale){
 	init(time, my_mother,  isFemale);
@@ -74,7 +74,7 @@ void Cow::init( const double& time, Cow* my_mother, bool isFemale){
 	female               =  isFemale;
 	infection_status     =  Infection_Status::SUSCEPTIBLE;
 	last_conception_time = -1;
-	calving_number       =  Cow::system->rng.number_of_calvings();
+	calving_number       =  Cow::system->rng->number_of_calvings();
 	has_been_pregnant_at_all_so_far = false;
 
 	calf_status          =  Calf_Status::NO_CALF;
@@ -210,7 +210,7 @@ Cow_Trade_Criteria Cow::getCowTradeCriteria(){
 }
 void Cow::handle_rest_time_after_ABORTION_or_BIRTH( double time )
 {
-  double execution_time = time + system->rng.time_of_rest_after_calving(calving_number);
+  double execution_time = time + system->rng->time_of_rest_after_calving(calving_number);
   if ( calving_number <= 0 )
     {/// Die Kuh hat ausgedient und wird auf Suppenkuh umgeschult.
 	    this->herd->farm->manager->registerCowForSale(this);
@@ -235,7 +235,7 @@ void Cow::execute_BIRTH( const double& time  )
   handle_rest_time_after_ABORTION_or_BIRTH( time );
 
   /// Will the newborn calf be living? (This depends on the age of the mother).
-  if ( !system->rng.is_this_a_deadbirth( first_birth ) )
+  if ( !system->rng->is_this_a_deadbirth( first_birth ) )
     { // Determine status of new calf
       Infection_Status is;
       switch ( calf_status )
@@ -267,12 +267,12 @@ void Cow::execute_BIRTH( const double& time  )
       //  because either it is male or if it is female it has a finite number of calvings
       if ( is == Infection_Status::PERSISTENTLY_INFECTED )
 	{ //PI animals will die earlier than others.
-	  time_of_death = time + system->rng.lifetime_PI();
+	  time_of_death = time + system->rng->lifetime_PI();
 
 	}
       else
 	{
-	  time_of_death =  time + system->rng.time_of_death_as_calf(); // If this returns -1, newborn will not die as calf.
+	  time_of_death =  time + system->rng->time_of_death_as_calf(); // If this returns -1, newborn will not die as calf.
 	  if ( time_of_death <= time )
 	    time_of_death = std::numeric_limits<double>::max();
 	}
@@ -280,7 +280,7 @@ void Cow::execute_BIRTH( const double& time  )
       double execution_time;
       if ( calf->female )
 	{/// Female cow: schedule first insemination if it doesn't die before.
-	  execution_time = time + system->rng.first_insemination_age();
+	  execution_time = time + system->rng->first_insemination_age();
 	  if ( time_of_death > execution_time ) {
 		  this->scheduleInsemination(execution_time, vaccinationTime, calf);
 
@@ -289,15 +289,15 @@ void Cow::execute_BIRTH( const double& time  )
       else
 	{/// Male cow: schedule culling if it doesn't die before.
 	  // [DEATH Event should be replaced by a new Event "DEPORTATION" or something similar..]
-// 	  execution_time = time + herd->farm->rng.life_expectancy_male_cow();
-	  execution_time = time + system->rng.life_expectancy_male_cow();
+// 	  execution_time = time + herd->farm->rng->life_expectancy_male_cow();
+	  execution_time = time + system->rng->life_expectancy_male_cow();
 	  if ( time_of_death > execution_time ) { system->schedule_event( new Event( execution_time , Event_Type::DEATH       , calf->id() ) ); }
 	}
 
       if ( infection_status == Infection_Status::IMMUNE && is == Infection_Status::SUSCEPTIBLE ) // If the mother is IMMUNE, then calf is protected by Maternal antibodies for a while
 	{
 	  is = Infection_Status::IMMUNE;
-	  double ma_end = time+system->rng.duration_of_MA();
+	  double ma_end = time+system->rng->duration_of_MA();
 	  if ( time_of_death > ma_end ){
 	    	system->schedule_event( new Event( ma_end , Event_Type::END_OF_MA , calf->id() ) );
 	    }
@@ -312,7 +312,7 @@ void Cow::execute_BIRTH( const double& time  )
       while(birthTimesOfCalves[index] != -1.0) index++;
       birthTimesOfCalves[index] = time;
       if(system->activeStrategy->usesEartag){
-	      double firstTestAge = system->rng.timeOfFirstTest();
+	      double firstTestAge = system->rng->timeOfFirstTest();
 	      system->schedule_event( new Event( system->getCurrentTime()+firstTestAge , Event_Type::TEST      , calf->id() )) ;
 
      }
@@ -343,7 +343,7 @@ void Cow::execute_ABORTION( const double& time )
 void Cow::execute_INSEMINATION( const double& time )
 {
   bool conception;
-  double execution_time = time + system->rng.insemination_result( !has_been_pregnant_at_all_so_far , &conception );
+  double execution_time = time + system->rng->insemination_result( !has_been_pregnant_at_all_so_far , &conception );
 
   if (conception) // The cow will become pregnant.
     system->schedule_event( new Event( execution_time , Event_Type::CONCEPTION , id() ) );
@@ -364,7 +364,7 @@ void Cow::execute_CONCEPTION(const double& time )
   switch( infection_status )
     {
     case Infection_Status::TRANSIENTLY_INFECTED:
-      calf_status = system->rng.calf_outcome_from_infection ( 0 );
+      calf_status = system->rng->calf_outcome_from_infection ( 0 );
       break;
     case Infection_Status::PERSISTENTLY_INFECTED:
       calf_status = Calf_Status::PERSISTENTLY_INFECTED;          // p=1 for the birth of a PI calf by a PI mother.
@@ -375,14 +375,14 @@ void Cow::execute_CONCEPTION(const double& time )
     }
   if ( calf_status == Calf_Status::ABORT )
     {
-      execution_time = time + system->rng.time_of_abortion_due_to_infection( 0 );
+      execution_time = time + system->rng->time_of_abortion_due_to_infection( 0 );
       system->schedule_event( new Event( execution_time , Event_Type::ABORTION , id() ) );
       return;
     }
 
   //At this point, the infection status of the mother can be anything.
   bool birth;
-  execution_time = time + system->rng.conception_result( time - birth_time , infection_status , &birth );
+  execution_time = time + system->rng->conception_result( time - birth_time , infection_status , &birth );
 
   if ( birth )
     system->schedule_event( new Event( execution_time , Event_Type::BIRTH    , id() ) );
@@ -419,14 +419,14 @@ void Cow::execute_INFECTION( const double& time )
   double execution_time;
   if ( time-birth_time < bvd_const::age_threshold_calf ) //It's a calf!
     {
-      if (system->rng.will_TI_calf_die() )
+      if (system->rng->will_TI_calf_die() )
 	{
-	  execution_time = time + system->rng.time_of_death_infected_calf() ;
+	  execution_time = time + system->rng->time_of_death_infected_calf() ;
 	  system->schedule_event( new Event( execution_time , Event_Type::DEATH , id() ) );
 	}
       else //Calf will not die
 	{
-	  execution_time = time + system->rng.duration_of_infection();
+	  execution_time = time + system->rng->duration_of_infection();
 	  system->schedule_event( new Event( execution_time , Event_Type::RECOVERY , id() ) );
 	}
     }
@@ -435,10 +435,10 @@ void Cow::execute_INFECTION( const double& time )
       if ( calf_status == Calf_Status::SUSCEPTIBLE ) // The cow is pregnant
 	{
 	  double time_of_pregnancy = time-last_conception_time;
-	  calf_status = system->rng.calf_outcome_from_infection ( time_of_pregnancy );
+	  calf_status = system->rng->calf_outcome_from_infection ( time_of_pregnancy );
 	  if (calf_status == Calf_Status::ABORT )
 	    {
-	      execution_time = time + system->rng.time_of_abortion_due_to_infection( time_of_pregnancy );
+	      execution_time = time + system->rng->time_of_abortion_due_to_infection( time_of_pregnancy );
 	      system->schedule_event( new Event( execution_time , Event_Type::ABORTION , id() ) );
 	    }
 	}
@@ -447,7 +447,7 @@ void Cow::execute_INFECTION( const double& time )
 	}
       //At this point it's still not a calf.
       //And it could be pregnant or not
-      execution_time = time + system->rng.duration_of_infection();
+      execution_time = time + system->rng->duration_of_infection();
       system->schedule_event( new Event( execution_time , Event_Type::RECOVERY , id() ) );
       /// NOTE: The reason to do schedule the RECOVERY separately for calves and non calves is not within the BVD model,
       ///        There is just no other way to get the right program flow.
@@ -531,7 +531,7 @@ inline void Cow::scheduleVaccination(const double& time) const{
 	system->schedule_event( new Event( vaccTime, Event_Type::VACCINATE, this->id() ) );
 }
 inline void Cow::runVaccination(const double& time){
-	if( this->infection_status == Infection_Status::SUSCEPTIBLE && system->rng.vaccinationWorks()){
+	if( this->infection_status == Infection_Status::SUSCEPTIBLE && system->rng->vaccinationWorks()){
 		this->infection_status = Infection_Status::IMMUNE;
 		this->herd->remove_cow_from_susceptible( this );
 
@@ -564,7 +564,7 @@ bool Cow::testCow(const Event* e){
 		else if(testOnce)
 			system->schedule_event( new Event( system->getCurrentTime()+0.5 , Event_Type::REMOVECOW, this->id() ) );//the statistics show that cows which have only been tested once and then removed, have been removed immediately
 		else{
-			double removeTime = system->rng.removeTimeAfterSecondTest();
+			double removeTime = system->rng->removeTimeAfterSecondTest();
 			system->schedule_event( new Event( system->getCurrentTime()+removeTime , Event_Type::REMOVECOW, this->id() ) );
 			if(this->hasBeenTestedPositiveYet)
 				for(auto calf : this->children)
@@ -585,7 +585,7 @@ bool Cow::testCow(const Event* e){
 }
 
 bool Cow::isTestedPositive(const Event* e){
-	bool resultIsCorrect = system->rng.bloodTestRightResult();
+	bool resultIsCorrect = system->rng->bloodTestRightResult();
 
 	bool correctHealthState = false;
 	switch(e->type){
@@ -606,10 +606,10 @@ bool Cow::isTestedPositive(const Event* e){
 	return !resultIsCorrect ^ correctHealthState; // (not A) XOR B
 }
 inline bool Cow::testAgain(){
-	return system->rng.cowGetsASecondChance();
+	return system->rng->cowGetsASecondChance();
 }
 inline void Cow::scheduleNextTest(){
-	double retestTime = system->rng.retestTime();
+	double retestTime = system->rng->retestTime();
 	system->schedule_event( new Event( system->getCurrentTime()+retestTime , Event_Type::TEST      , this->id() )) ;
 }
 

@@ -30,7 +30,7 @@ void CowWellFarmManager::chooseCowsToOfferFromGroupAndAddToSellingGroup(int numb
 
 		c = new Cow(system->current_time(), NULL);
 		c->calf_status = Calf_Status::SUSCEPTIBLE;
-		double percent = system->rng.ran_unif_double(1.0,0.0);
+		double percent = system->rng->ran_unif_double(1.0,0.0);
 		if(percent < this->tis){
 			c->infection_status = Infection_Status::TRANSIENTLY_INFECTED;
 		}else if(percent < this->tis + this->pis){
@@ -47,7 +47,7 @@ void CowWellFarmManager::chooseCowsToOfferFromGroupAndAddToSellingGroup(int numb
 int CowWellFarmManager::getACowId(){
 	Cow* c = new Cow(system->current_time(), NULL);
 		c->calf_status = Calf_Status::SUSCEPTIBLE;
-		double percent = system->rng.ran_unif_double(1.0,0.0);
+		double percent = system->rng->ran_unif_double(1.0,0.0);
 		if(percent < this->tis){
 			c->infection_status = Infection_Status::TRANSIENTLY_INFECTED;
 		}else if(percent < this->tis + this->pis){
