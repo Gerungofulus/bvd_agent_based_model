@@ -300,6 +300,8 @@ void Cow::execute_BIRTH( const double& time  )
 	  double ma_end = time+system->rng->duration_of_MA();
 	  if ( time_of_death > ma_end ){
 	    	system->schedule_event( new Event( ma_end , Event_Type::END_OF_MA , calf->id() ) );
+        std::cout << "planning for " << time + 180.0 << std::endl;
+        calf->scheduleVaccination(time + 180.0);
 	    }
 	}
       calf->infection_status = is;
@@ -617,7 +619,7 @@ inline void Cow::scheduleNextTest(){
 	if(c == nullptr)
 		c = this;
 	system->schedule_event( new Event( time , Event_Type::INSEMINATION, c->id() ) );
-std::cout << "vaccination enabled: "<< system->activeStrategy->usesVaccination << std::endl; 
+std::cout << "vaccination enabled: "<< system->activeStrategy->usesVaccination << std::endl;
   if(system->activeStrategy->usesVaccination){//vaccination
 
 		vaccTime = time - System::getInstance(nullptr)->activeStrategy->vaccinationTimeBeforeInsemination;

@@ -16,6 +16,7 @@
 #include "Simple_One_Herd_Farm.h"
 #include "Events.h"
 #include "BVD_Random_Number_Generator.h"
+#include "BVDContainmentStrategy.h"
 using namespace fakeit;
 TEST_CASE("Vaccination tests", "[Cow]"){
   //Set up a system with a single cow in a single farm
@@ -60,6 +61,7 @@ TEST_CASE("Vaccination tests", "[Cow]"){
       Event* e = q.top();
       if (e->type == Event_Type::VACCINATE && e->id ==  erna->id()+1){//check for the calf, it the first vaccination is scheduled after the approximate end of its MA
         REQUIRE(e->execution_time > 680);
+        REQUIRE(e->execution_time < 730);
         // return;
       }
       q.pop();
@@ -131,8 +133,40 @@ TEST_CASE("Vaccination tests", "[Cow]"){
     REQUIRE(numberOfVaccinationEvents == 1);
     REQUIRE(numberOfVaccinationEndEvents == 0);
   }
-  SECTION("On schedule of a new insemination: Vaccinate a cow 40 days before insemination if it hasn't been vaccinated before."){}
-  SECTION("On schedule of a new insemination: If the cow has been vaccinated in the last 200 days, do nothing"){}
+  SECTION("On schedule of a new insemination: Vaccinate a cow 40 days before insemination if it hasn't been vaccinated before."){
+    double currentTime = s->getCurrentTime();
+    double inseminationTime = currentTime + 180.0;
+    double plannedVaccTimeOfTestedFunction = -1.0;
+    const double expectedVaccTime = inseminationTime - s->activeStrategy->vaccinationTimeBeforeInsemination;
+    erna->scheduleInsemination(inseminationTime, plannedVaccTimeOfTestedFunction);
+    REQUIRE(expectedVaccTime == plannedVaccTimeOfTestedFunction);
+    //check if the event was actually queued with this time
+    Event_queue q = s->getEventQueue();
+    while (!q.empty()){//iterate over all events in that queue
+      Event* e = q.top();
+      if (e->type == Event_Type::VACCINATION && e->id ==  erna->id()){//check if a vaccination end has been scheduled: the entry should be exactly one
+        REQUIRE(e->execution_time == expectedVaccTime);
+      }
+      q.pop();
+    }
+  }
+  SECTION("On schedule of a new insemination: If the cow has been vaccinated in the last 200 days, do nothing"){
+    double currentTime = s->getCurrentTime();
+    double inseminationTime = currentTime + 180.0;
+    double plannedVaccTimeOfTestedFunction = -1.0;
+    const double expectedVaccTime = inseminationTime - s->activeStrategy->vaccinationTimeBeforeInsemination;
+    erna->scheduleInsemination(inseminationTime, plannedVaccTimeOfTestedFunction);
+    REQUIRE(expectedVaccTime == plannedVaccTimeOfTestedFunction);
+    //check if the event was actually queued with this time
+    Event_queue q = s->getEventQueue();
+    while (!q.empty()){//iterate over all events in that queue
+      Event* e = q.top();
+      if (e->type == Event_Type::VACCINATION && e->id ==  erna->id()){//check if a vaccination end has been scheduled: the entry should be exactly one
+        REQUIRE(e->execution_time == expectedVaccTime);
+      }
+      q.pop();
+    }
+  }
   SECTION("On schedule of a new insemination: If the cow has been vaccinated before the last 200 days, invalidate the old vaccination end event, the old next vaccination event and schedule a new vaccination 40 days ahead of insemination"){}
 }
 
